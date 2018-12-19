@@ -13,7 +13,7 @@ Oracle Cloud Infrastructure Hadoop Terraform Module deploys a secure Hadoop repl
 
 ```hcl
 module "hadoop" {
-  source               = "../"
+  source               = "./modules"
   compartment_id       = "${var.compartment_ocid}"
   display_name         = "${var.display_name}"
   availability_domains = "${var.availability_domains}"
