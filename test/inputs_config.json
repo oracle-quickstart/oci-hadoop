@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "tenancy_ocid": "<tenancy OCID>",
   "compartment_ocid": "<compartment OCID>",
@@ -10,3 +11,6 @@
   "bastion_authorized_keys": "<path to bastion host public key>",
   "bastion_private_key": "<path to bastion host private key>"
 }
+=======
+
+>>>>>>> 21ab4f2c88168350e35a93fc30cebb048808a928
