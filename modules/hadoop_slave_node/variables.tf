@@ -57,11 +57,6 @@ variable "label_prefix" {
   default     = ""
 }
 
-variable "assign_public_ip" {
-  description = "Whether the VNIC should be assigned a public IP address."
-  default     = false
-}
-
 variable "ssh_authorized_keys" {
   description = "Public SSH keys path to be included in the ~/.ssh/authorized_keys file for the default user on the instance. "
   default     = ""

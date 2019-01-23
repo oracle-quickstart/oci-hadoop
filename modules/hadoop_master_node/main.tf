@@ -35,40 +35,47 @@ resource "oci_core_instance" "TFhadoopMaster" {
     source_type = "image"
   }
 
-  provisioner "file" {
-    connection = {
-      host        = "${self.private_ip}"
-      agent       = false
-      timeout     = "5m"
-      user        = "opc"
-      private_key = "${file("${var.ssh_private_key}")}"
-
-      bastion_host        = "${var.bastion_host}"
-      bastion_user        = "${var.bastion_user}"
-      bastion_private_key = "${file("${var.bastion_private_key}")}"
+  resource "null_resource" "TFhadoopMaster" {
+    triggers = {
+      //TFhadoopMaster_id = "${oci_core_instance.TFhadoopMaster.*.id}"
+      TFhadoopMaster_id = "${element{module.hadoop.hadoop_master_node.instance_id, 0}"
     }
 
-    content     = "${data.template_file.setup_hadoop.rendered}"
-    destination = "~/setup.sh"
-  }
+    provisioner "file" {
+      connection = {
+        host        = "${self.private_ip}"
+        agent       = false
+        timeout     = "5m"
+        user        = "opc"
+        private_key = "${file("${var.ssh_private_key}")}"
 
-  provisioner "remote-exec" {
-    connection = {
-      host        = "${self.private_ip}"
-      agent       = false
-      timeout     = "5m"
-      user        = "opc"
-      private_key = "${file("${var.ssh_private_key}")}"
+        bastion_host        = "${var.bastion_host}"
+        bastion_user        = "${var.bastion_user}"
+        bastion_private_key = "${file("${var.bastion_private_key}")}"
+      }
 
-      bastion_host        = "${var.bastion_host}"
-      bastion_user        = "${var.bastion_user}"
-      bastion_private_key = "${file("${var.bastion_private_key}")}"
+      content     = "${data.template_file.setup_hadoop.rendered}"
+      destination = "~/setup.sh"
     }
 
-    inline = [
-      "sudo chmod +x ~/setup.sh",
-      "sudo ~/setup.sh",
-    ]
+    provisioner "remote-exec" {
+      connection = {
+        host        = "${self.private_ip}"
+        agent       = false
+        timeout     = "5m"
+        user        = "opc"
+        private_key = "${file("${var.ssh_private_key}")}"
+
+        bastion_host        = "${var.bastion_host}"
+        bastion_user        = "${var.bastion_user}"
+        bastion_private_key = "${file("${var.bastion_private_key}")}"
+      }
+
+      inline = [
+        "sudo chmod +x ~/setup.sh",
+        "sudo ~/setup.sh",
+      ]
+    }
   }
 
   timeouts {

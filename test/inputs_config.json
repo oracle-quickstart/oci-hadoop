@@ -1,12 +1,12 @@
 {
-  "tenancy_ocid": "ocid1.tenancy.oc1..aaaaaaaawgbzspd6cjovpmic7dahwbalg4opcbixgguo6z2s7t335m6lalbq",
-  "compartment_ocid": "ocid1.compartment.oc1..aaaaaaaawzlfllc7kkf62dzkes75urrxfxppz5fjphx27a7k5fk5jnzvyhiq",
-  "user_ocid": "ocid1.user.oc1..aaaaaaaa3u4gxcug7l7n4527gnwj2hg7rgkj24yazwh3zs7y44nzfyohxqwq",
-  "region": "us-phoenix-1",
-  "fingerprint": "2d:f4:00:c0:11:92:6b:ec:4e:57:e5:48:41:1f:82:82",
-  "private_key_path": "/home/naj/.oraclebmc/bmcs_api_key.pem",
-  "ssh_authorized_keys": "/home/naj/.ssh/id_rsa.pub",
-  "ssh_private_key": "/home/naj/.ssh/id_rsa",
-  "bastion_authorized_keys": "/home/naj/.ssh/id_rsa.pub",
-  "bastion_private_key": "/home/naj/.ssh/id_rsa"
+  "tenancy_ocid": "<tenancy OCID>",
+  "compartment_ocid": "<compartment OCID>",
+  "user_ocid": "<user OCID>",
+  "region": "<region in which to operate, example: us-ashburn-1, us-phoenix-1>",
+  "fingerprint": "<PEM key fingerprint>",
+  "private_key_path": "<path to the private key that matches the fingerprint above>",
+  "ssh_authorized_keys": "<path to public key>",
+  "ssh_private_key": "<path to private key>",
+  "bastion_authorized_keys": "<path to bastion host public key>",
+  "bastion_private_key": "<path to bastion host private key>"
 }

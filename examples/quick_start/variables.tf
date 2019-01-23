@@ -7,21 +7,25 @@ variable "compartment_ocid" {}
 variable "ssh_authorized_keys" {}
 variable "ssh_private_key" {}
 
-variable "network_cidrs" {
-  type = "map"
-
-  default = {
-    vcn_cidr = "10.0.0.0/16"
-
-    bastionSubnetAD = "10.0.10.0/24"
-    masterSubnetAD  = "10.0.11.0/24"
-    slaveSubnetAD1  = "10.0.12.0/24"
-    slaveSubnetAD2  = "10.0.13.0/24"
-    slaveSubnetAD3  = "10.0.14.0/24"
-    lbSubnetAD1     = "10.0.15.0/24"
-    lbSubnetAD2     = "10.0.16.0/24"
-  }
+variable "vcn_cidr" {
+  default = "10.0.0.0/16"
 }
+  
+
+locals {
+  // If VCN is /16, each tier will get /20
+  dmz_tier_prefix = "${cidrsubnet("${var.vcn_cidr}", 4, 0)}"
+  app_tier_prefix = "${cidrsubnet("${var.vcn_cidr}", 4, 1)}"
+ 
+  // subnet families within the DMZ tier - /24
+  lb_subnet_prefix = "${cidrsubnet("${local.dmz_tier_prefix}", 4, 0)}"
+  bastion_subnet_prefix = "${cidrsubnet("${local.dmz_tier_prefix}", 4, 1)}"
+ 
+  // subnet families within the app tier - /23
+  app_subnet_prefix = "${cidrsubnet("${local.app_tier_prefix}", 3, 0)}"
+ 
+}
+
 
 variable "label_prefix" {
   default = ""

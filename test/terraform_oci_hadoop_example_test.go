@@ -3,7 +3,7 @@ package test
 import (
 	"strings"
 	"testing"
-    "./helper"
+        "./helper"
 	
 	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/stretchr/testify/assert"
@@ -81,7 +81,7 @@ func validateByHTTPGet(t *testing.T, terraformOptions *terraform.Options) {
 	hdfs_url := terraform.Output(t, terraformOptions, "Hadoop_Namenode_Web_UI")
 	resource_manager_url := terraform.Output(t, terraformOptions, "Hadoop_Resource_Manager_Web_UI")
 	job_history_url := terraform.Output(t, terraformOptions, "Hadoop_Job_History_Server_Web_UI")
-    	http_helper.HttpGetWithCustomValidation(t, hdfs_url, func(statusCode int,body string) bool {
+    http_helper.HttpGetWithCustomValidation(t, hdfs_url, func(statusCode int,body string) bool {
                         return statusCode == 200 
                 })
 	http_helper.HttpGetWithCustomValidation(t, resource_manager_url, func(statusCode int,body string) bool {
@@ -99,7 +99,7 @@ func  validateByWordCountJob(t *testing.T, terraformOptions *terraform.Options, 
 	command := `hdfs dfs -rm -r /user; 
 		    hdfs dfs -mkdir /user; 
 		    hdfs dfs -copyFromLocal /usr/share/dict /user/dft; 
-		    hadoop jar $HADOOP_COMMON_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar  wordcount /user/dft /user/dft-output`
+		    hadoop jar $HADOOP_COMMON_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar wordcount /user/dft /user/dft-output`
 	bastion_public_ip := terraform.Output(t, terraformOptions, "Bastion_Public_IP")
 	slave_private_ips := terraform.Output(t, terraformOptions, "Hadoop_Data_Node_private_ips")
 	private_ips := strings.Split(slave_private_ips, ",")

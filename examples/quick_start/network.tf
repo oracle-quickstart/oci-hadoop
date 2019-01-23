@@ -4,7 +4,7 @@
 resource "oci_core_virtual_network" "HadoopVCN" {
   compartment_id = "${var.compartment_ocid}"
   display_name   = "HadoopVCN"
-  cidr_block     = "${lookup(var.network_cidrs, "vcn_cidr")}"
+  cidr_block     = "${var.vcn_cidr}"
   dns_label      = "HadoopVCN"
 }
 
@@ -242,7 +242,7 @@ resource "oci_core_security_list" "hadoopBastion" {
     }
 
     protocol    = "6"
-    destination = "${lookup(var.network_cidrs, "vcn_cidr")}"
+    destination = "${var.vcn_cidr}"
   }]
 
   ingress_security_rules = [{
@@ -284,7 +284,7 @@ resource "oci_core_security_list" "hadoopLB" {
 ############################################
 resource "oci_core_subnet" "hadoopMasterSubnetAD" {
   availability_domain = "${data.template_file.ad_names.*.rendered[0]}"
-  cidr_block          = "${lookup(var.network_cidrs, "masterSubnetAD")}"
+  cidr_block          = "${cidrsubnet(local.app_subnet_prefix, 3, 4)}"
   display_name        = "${var.label_prefix}HadoopMasterSubnetAD"
   dns_label           = "masterad"
   security_list_ids   = ["${oci_core_security_list.HadoopPrivate.id}"]
@@ -300,7 +300,7 @@ resource "oci_core_subnet" "hadoopMasterSubnetAD" {
 resource "oci_core_subnet" "hadoopSlaveSubnetAD" {
   count               = "${length(data.template_file.ad_names.*.rendered)}"
   availability_domain = "${data.template_file.ad_names.*.rendered[count.index]}"
-  cidr_block          = "${lookup(var.network_cidrs, "slaveSubnetAD${count.index+1}")}"
+  cidr_block          = "${cidrsubnet(local.app_subnet_prefix, 3, count.index)}"
   display_name        = "${var.label_prefix}HadoopSlaveSubnetAD${count.index+1}"
   dns_label           = "slavead${count.index+1}"
   security_list_ids   = ["${oci_core_security_list.HadoopPrivate.id}"]
@@ -317,7 +317,7 @@ resource "oci_core_subnet" "hadoopBastion" {
   availability_domain = "${data.template_file.ad_names.*.rendered[var.bastion_ad_index]}"
   compartment_id      = "${var.compartment_ocid}"
   display_name        = "hadoopBastionAD${var.bastion_ad_index+1}"
-  cidr_block          = "${lookup(var.network_cidrs, "bastionSubnetAD")}"
+  cidr_block          = "${cidrsubnet(local.bastion_subnet_prefix, 3, 0)}"
   security_list_ids   = ["${oci_core_security_list.hadoopBastion.id}"]
   vcn_id              = "${oci_core_virtual_network.HadoopVCN.id}"
   route_table_id      = "${oci_core_route_table.public.id}"
@@ -329,7 +329,7 @@ resource "oci_core_subnet" "hadoopBastion" {
 ############################################
 resource "oci_core_subnet" "hadoopLBSubnet1" {
   availability_domain = "${data.template_file.ad_names.*.rendered[0]}"
-  cidr_block          = "${lookup(var.network_cidrs, "lbSubnetAD1")}"
+  cidr_block          = "${cidrsubnet(local.lb_subnet_prefix, 3, 0)}"
   display_name        = "hadoopLBSubnet1"
   dns_label           = "subnet1"
   security_list_ids   = ["${oci_core_security_list.hadoopLB.id}"]
@@ -341,7 +341,7 @@ resource "oci_core_subnet" "hadoopLBSubnet1" {
 
 resource "oci_core_subnet" "hadoopLBSubnet2" {
   availability_domain = "${data.template_file.ad_names.*.rendered[1]}"
-  cidr_block          = "${lookup(var.network_cidrs, "lbSubnetAD2")}"
+  cidr_block          = "${cidrsubnet(local.lb_subnet_prefix, 3, 1)}"
   display_name        = "hadoopLBSubnet2"
   dns_label           = "subnet2"
   security_list_ids   = ["${oci_core_security_list.hadoopLB.id}"]

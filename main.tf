@@ -39,12 +39,10 @@ module "hadoop_slave_node" {
   rm_port              = "${var.rm_port}"
   jhs_port             = "${var.jhs_port}"
   hadoop_master_ip     = "${module.hadoop_master_node.private_ip}"
-
-  #  resource_manager_ip = "${module.hadoop_master_node.private_ip}"
-  ssh_authorized_keys = "${var.ssh_authorized_keys}"
-  ssh_private_key     = "${var.ssh_private_key}"
-  user_data           = "${var.slave_user_data}"
-  bastion_host        = "${var.bastion_host}"
-  bastion_user        = "${var.bastion_user}"
-  bastion_private_key = "${var.bastion_private_key}"
+  ssh_authorized_keys  = "${var.ssh_authorized_keys}"
+  ssh_private_key      = "${var.ssh_private_key}"
+  user_data            = "${var.slave_user_data}"
+  bastion_host         = "${var.bastion_host}"
+  bastion_user         = "${var.bastion_user}"
+  bastion_private_key  = "${var.bastion_private_key}"
 }
