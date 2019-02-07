@@ -59,7 +59,7 @@ variable "master_user_data" {
 
 variable "slave_count" {
   description = "Number of slave instances to launch. "
-  default     = 3
+  default     = "3"
 }
 
 variable "slave_ads" {
@@ -92,6 +92,16 @@ variable "slave_user_data" {
   default     = ""
 }
 
+variable "slave_block_storage_sizes_in_gbs" {
+  description = "Sizes of volumes to create and attach to each instance. "
+  default     = ["50"]
+}
+
+variable "slave_block_vols_per_node" {
+  description = "Number of block volumes per instance. "
+  default     = "2"
+}
+
 variable "nn_port" {
   description = "The port to use for hadoop Name Node. "
   default     = 50070
@@ -104,7 +114,7 @@ variable "rm_port" {
 
 variable "jhs_port" {
   description = "The Port to use for hadoop Job History Server. "
-  default     = 19888 
+  default     = 19888
 }
 
 variable "bastion_host" {

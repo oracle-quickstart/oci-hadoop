@@ -3,73 +3,73 @@ variable "compartment_ocid" {
 }
 
 variable "availability_domains" {
-  description = "The Availability Domain of the instance. "
-  default     = []
+  description = "The Availability Domain of the instance."
+  type        = "list"
 }
-
-#variable "availability_domain" {
-#  description = "The Availability Domain of the instance. "
-#  default     = []
-#}
 
 variable "hadoop_version" {
   description = "The version of the hadoop distribution."
-  default     = "2.9.2"
 }
 
-variable "hadoop_master_ip" {
-  description = "Hadoop Master private ip"
-  default     = ""
-}
-
-variable "hadoop_master_nn_port" {
-  description = "describe your variable"
-  default     = ""
+variable "hadoop_master_name" {
+  description = "Hadoop Master Host Name"
 }
 
 variable "slave_display_name" {
-  description = "The name of the slave instance. "
-  default     = ""
+  description = "The name of the slave instance."
 }
 
 variable "subnet_ids" {
   description = "The OCID of the slave subnet to create the VNIC in. "
-  default     = []
+  type        = "list"
 }
-
-#variable "slave_ads" {
-#  description = "ADs list for slave instances"
-#  default     = "${data.template_file.ad_names.*.rendered}" 
-#}
 
 variable "shape" {
   description = "Instance shape to use for master instance. "
-  default     = ""
 }
 
 variable "slave_count" {
-  description = "Slave Instances count. "
-  default     = "3"
+  description = "Slave Instances count."
+}
+
+variable "boot_volume_size_in_gbs" {
+  description = "The size of the boot volume in GBs. "
+  default     = "50"
+}
+
+variable "block_storage_sizes_in_gbs" {
+  description = "Sizes of volumes to create and attach to each instance. "
+  type        = "list"
+}
+
+variable "block_vols_per_node" {
+  description = "Number of block volumes per instance. "
+}
+
+variable "attachment_type" {
+  description = "Attachment type. "
+  default     = "iscsi"
+}
+
+variable "use_chap" {
+  description = "Whether to use CHAP authentication for the volume attachment. "
+  default     = false
 }
 
 variable "label_prefix" {
   description = "To create unique identifier for multiple clusters in a compartment."
-  default     = ""
 }
 
 variable "ssh_authorized_keys" {
   description = "Public SSH keys path to be included in the ~/.ssh/authorized_keys file for the default user on the instance. "
-  default     = ""
 }
 
 variable "ssh_private_key" {
   description = "The private key path to access instance. "
-  default     = ""
 }
 
 variable "image_id" {
   description = "The OCID of an image for an instance to use. "
-  default     = ""
 }
 
 variable "user_data" {
@@ -94,7 +94,6 @@ variable "bastion_host" {
 
 variable "bastion_user" {
   description = "The SSH user to connect to the bastion host."
-  default     = "opc"
 }
 
 variable "bastion_private_key" {

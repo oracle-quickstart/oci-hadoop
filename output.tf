@@ -2,10 +2,6 @@ output "master_instance_id" {
   value = "${module.hadoop_master_node.id}"
 }
 
-output "master_public_ip" {
-  value = "${module.hadoop_master_node.public_ip}"
-}
-
 output "master_private_ip" {
   value = "${module.hadoop_master_node.private_ip}"
 }

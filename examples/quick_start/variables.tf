@@ -10,22 +10,19 @@ variable "ssh_private_key" {}
 variable "vcn_cidr" {
   default = "10.0.0.0/16"
 }
-  
 
 locals {
   // If VCN is /16, each tier will get /20
   dmz_tier_prefix = "${cidrsubnet("${var.vcn_cidr}", 4, 0)}"
   app_tier_prefix = "${cidrsubnet("${var.vcn_cidr}", 4, 1)}"
- 
+
   // subnet families within the DMZ tier - /24
-  lb_subnet_prefix = "${cidrsubnet("${local.dmz_tier_prefix}", 4, 0)}"
+  lb_subnet_prefix      = "${cidrsubnet("${local.dmz_tier_prefix}", 4, 0)}"
   bastion_subnet_prefix = "${cidrsubnet("${local.dmz_tier_prefix}", 4, 1)}"
- 
+
   // subnet families within the app tier - /23
   app_subnet_prefix = "${cidrsubnet("${local.app_tier_prefix}", 3, 0)}"
- 
 }
-
 
 variable "label_prefix" {
   default = ""
@@ -83,6 +80,7 @@ variable "bastion_user" {
 }
 
 variable "bastion_authorized_keys" {}
+
 variable "bastion_private_key" {}
 
 variable "bastion_ad_index" {

@@ -5,7 +5,7 @@ yum -y install java-1.8.0-openjdk
 
 #Install hadoop
 
-wget https://www-us.apache.org/dist/hadoop/common/stable/hadoop-${hadoop_version}.tar.gz
+wget https://www-us.apache.org/dist/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
 tar -xf hadoop-${hadoop_version}.tar.gz -C /usr/local/
 chown -R opc:opc /usr/local/hadoop-${hadoop_version}
 chmod -R 755 /usr/local/hadoop-${hadoop_version}
@@ -86,7 +86,7 @@ echo "
 <configuration>
    <property>
       <name>fs.defaultFS</name>
-      <value>hdfs://${hadoop_master_ip}:9000</value>
+      <value>hdfs://${hadoop_master_name}:9000</value>
    </property>
 </configuration>
 " >/usr/local/hadoop-${hadoop_version}/etc/hadoop/core-site.xml
@@ -108,7 +108,7 @@ echo "
    </property>
    <property>
       <name>dfs.namenode.http-address</name>
-      <value>${hadoop_master_ip}:${nn_port}</value>
+      <value>${hadoop_master_name}:${nn_port}</value>
    </property>
 </configuration>
 " >/usr/local/hadoop-${hadoop_version}/etc/hadoop/hdfs-site.xml
@@ -122,11 +122,11 @@ echo "
    </property>
    <property>
       <name>mapreduce.jobhistory.address</name>
-      <value>${hadoop_master_ip}:10020</value>
+      <value>${hadoop_master_name}:10020</value>
     </property>
     <property>
       <name>mapreduce.jobhistory.webapp.address</name>
-      <value>${hadoop_master_ip}:${jhs_port}</value>
+      <value>${hadoop_master_name}:${jhs_port}</value>
     </property>
  </configuration>
 " > /usr/local/hadoop-${hadoop_version}/etc/hadoop/mapred-site.xml
@@ -136,7 +136,7 @@ echo "
 <configuration>
    <property>
       <name>yarn.resourcemanager.hostname</name>
-      <value>${hadoop_master_ip}</value>
+      <value>${hadoop_master_name}</value>
    </property>
    <property>
       <name>yarn.nodemanager.aux-services</name>
@@ -148,7 +148,7 @@ echo "
    </property>
    <property>
       <name>yarn.resourcemanager.webapp.address</name>
-      <value>${hadoop_master_ip}:${rm_port}</value>
+      <value>${hadoop_master_name}:${rm_port}</value>
    </property>
 </configuration>
 " > /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml 

@@ -1,11 +1,57 @@
 #!/bin/bash
 
+function waitforMaster() { 
+   timeout 600  \
+   bash -c "while ! echo exit | nc -z -w5  ${hadoop_master_name} 9000
+   do
+      sleep 10
+      echo 'Waiting for Master'
+   done"
+}
+
+function add_block_vols() {
+count=1
+while [ "$count" -le "${vols_per_node}" ]
+do
+   count=$(expr $count + 1)
+   sudo iscsiadm -m discoverydb -D -t sendtargets -p 169.254.2.$count:3260 2>&1 2>/dev/null
+done
+
+sudo iscsiadm -m node -l
+iscsi_chk=`echo -e $?`
+
+if [ $iscsi_chk == 0 ]
+then
+        echo -e "Discovering iscsi disk(s)"
+        echo -e "Setting automatic startup for disk"
+        sudo iscsiadm -m node -n node.startup -v automatic
+else
+        echo -e "iscsi discovery failed"
+        exit
+fi
+
+#Creating file system and adding entry to fstab
+count=0
+for disk in `fdisk -l | grep sd | grep -v sda | gawk '{print substr($2, 1, length($2)-1)}'`
+do
+   UUID=`sudo lsblk -no UUID $disk`
+   echo "UUID=$UUID}   /datastore$count    ext4   defaults,_netdev,nofail,noatime,discard,barrier=0 0 2" | sudo tee -a /etc/fstab
+   sudo mke2fs -F -t ext4 -b 4096 $disk
+   sudo mkdir /datastore$count
+   sudo mount $disk /datastore$count
+   count=$(expr $count + 1)
+   vollist[$count]="/datastore$count"
+done
+dfs_datanode_dir=`(IFS=,; echo "$${vollist[*]}")`
+}
+
 ##Install JDK
  yum -y install java-1.8.0-openjdk
+ yum -y install nc
 
 #Install hadoop
 
-wget https://www-us.apache.org/dist/hadoop/common/stable/hadoop-${hadoop_version}.tar.gz
+wget https://www-us.apache.org/dist/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
 tar -xf hadoop-${hadoop_version}.tar.gz -C /usr/local/
 chown -R opc:opc /usr/local/hadoop-${hadoop_version}
 chmod -R 755 /usr/local/hadoop-${hadoop_version}
@@ -23,6 +69,7 @@ export YARN_HOME=\$HADOOP_INSTALL
 " >>/home/opc/.bashrc
 
 nodename=`hostname`
+
 
 #Enable hadoop default firewall ports 
 
@@ -59,6 +106,10 @@ systemctl start firewalld.service
 
 echo " firewall started "
 
+#Discovering block volume(s)
+
+add_block_vols
+
 #Setup hadoop-env
 
 echo "
@@ -76,7 +127,7 @@ echo "
 <configuration>
    <property>
       <name>fs.defaultFS</name>
-      <value>hdfs://${hadoop_master_ip}:9000</value>
+      <value>hdfs://${hadoop_master_name}:9000</value>
     </property>
 </configuration>
 " >/usr/local/hadoop-${hadoop_version}/etc/hadoop/core-site.xml
@@ -86,11 +137,11 @@ echo "
 <configuration>
    <property>
       <name>dfs.replication</name>
-      <value>3</value>
+      <value>${replication_count}</value>
    </property>
    <property>
       <name>dfs.datanode.data.dir</name>
-      <value>file:///home/opc/hadoop/DataStore</value>
+      <value>$dfs_datanode_dir</value>
    </property>
    <property>
       <name>dfs.permissions</name>
@@ -108,7 +159,7 @@ echo "
    </property>
    <property>
       <name>mapreduce.jobhistory.address</name>
-      <value>${hadoop_master_ip}:10020</value>
+      <value>${hadoop_master_name}:10020</value>
    </property>
     <property>
       <name>yarn.app.mapreduce.am.job.client.port-range</name>
@@ -122,7 +173,7 @@ echo "
 <configuration>
    <property>
       <name>yarn.resourcemanager.hostname</name>
-      <value>${hadoop_master_ip}</value>
+      <value>${hadoop_master_name}</value>
    </property>
    <property>
       <name>yarn.nodemanager.aux-services</name>
@@ -134,15 +185,15 @@ echo "
    </property>
    <property>
       <name>yarn.resourcemanager.address</name>
-      <value>http://${hadoop_master_ip}:8032</value>
+      <value>http://${hadoop_master_name}:8032</value>
    </property>
    <property>
       <name>yarn.resourcemanager.resource-tracker.address</name>
-      <value>${hadoop_master_ip}:8031</value>
+      <value>${hadoop_master_name}:8031</value>
    </property>
    <property>
       <name>yarn.resourcemanager.scheduler.address</name>
-      <value>${hadoop_master_ip}:8030</value>
+      <value>${hadoop_master_name}:8030</value>
    </property>
      <property>
       <name>yarn.nodemanager.address</name>
@@ -150,6 +201,10 @@ echo "
    </property>
 </configuration>
 " > /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml 
+
+
+
+waitforMaster
 
 #Start services
  /usr/local/hadoop-${hadoop_version}/sbin/hadoop-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop --script hdfs start datanode
