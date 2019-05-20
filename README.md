@@ -1,5 +1,8 @@
 # Oracle Cloud Infrastructure Hadoop Terraform Module
 
+These are Terraform modules that deploy [Hadoop](https://hadoop.apache.org/) on [Oracle Cloud Infrastructure (OCI)](https://cloud.oracle.com/en_US/cloud-infrastructure).
+
+## About
 Apache Hadoop is an open-source software for reliable, scalable, distributed computing.  Hadoop framework allows distributed processing of large data sets across clusters of computers using simple programming models
 
 Oracle Cloud Infrastructure Hadoop Terraform Module deploys a secure Hadoop replica set on Oracle Cloud Infrastructure (OCI) using Terraform.
