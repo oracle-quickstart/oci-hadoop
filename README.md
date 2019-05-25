@@ -1,4 +1,4 @@
-# Oracle Cloud Infrastructure Hadoop Terraform Module
+# oci-quickstart-hadoop
 
 These are Terraform modules that deploy [Hadoop](https://hadoop.apache.org/) on [Oracle Cloud Infrastructure (OCI)](https://cloud.oracle.com/en_US/cloud-infrastructure).
 
