@@ -1,0 +1,344 @@
+title: Sample input variable schema
+schemaVersion: 1.1.0
+version: "20210506"
+locale: "en"
+groupings:
+- title: "SSH Key"
+  variables:
+  - ${provide_ssh_key}
+  - ${ssh_provided_key}
+- title: "Availabilty Domain"
+  variables:
+  - ${availability_domain}
+- title: "VCN Options"
+  variables:
+  - ${useExistingVcn}
+  - ${myVcn}
+  - ${vcn_dns_label}
+  - ${custom_cidrs}
+  - ${VCN_CIDR}
+  - ${public_cidr}
+  - ${private_cidr}
+- title: "Hadoop Options"
+  variables:
+  - ${cluster_name}
+  - ${UsePrefix}
+  - ${hadoop_version}
+- title: "Edge Node Configuration"
+  variables:
+  - ${edge_instance_shape}
+  - ${publicSubnet}
+  - ${edge_dynamic_ocpus}
+- title: "Master Node Configuration"
+  variables:
+  - ${master_instance_shape}
+  - ${master_node_count}
+  - ${nn_volume_size_in_gbs}
+  - ${master_dynamic_ocpus}
+  - ${privateSubnet}
+- title: "Worker Node Configuration"
+  variables:
+  - ${worker_instance_shape}
+  - ${worker_module_count}
+  - ${enable_block_volumes}
+  - ${block_volumes_per_worker}
+  - ${hdfs_blocksize_in_gbs}
+  - ${customize_block_volume_performance}
+  - ${block_volume_high_performance}
+  - ${block_volume_cost_savings}
+  - ${enable_secondary_vnic}
+  - ${blockvolume_cidr}
+  - ${blockvolumeSubnet}
+  - ${dynamic_ocpus}
+- title: "Pre-Defined"
+  variables:
+  - ${region}
+  - ${compartment_ocid}
+  - ${tenancy_ocid}
+  - ${OELImageOCID}
+  - ${oci_service_gateway}
+  - ${AD}
+  - ${vpus_per_gb}
+  - ${secondary_vnic_count}
+  - ${blockvolume_subnet_id}
+  - ${worker_domain}
+  - ${worker_node_count}
+  visible: false
+
+variables:
+  cluster_name:
+    type: string
+    title: "Cluster Name"
+    description: "Name your Cluster"
+    required: true
+
+  UsePrefix:
+    type: boolean
+    title: "Prefix Name"
+    description: "Use prefix with instance names"
+    default: true
+    required: false
+
+  useExistingVcn:
+    type: boolean 
+    title: "Use Existing VCN"
+    description: "Click to use existing VCN, otherwise VCN and Subnets will be created"
+    required: true
+    default: false
+
+  myVcn:
+    type: oci:core:vcn:id
+    title: "Existing VCN"
+    description: "Select Existing VCN"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    visible: ${useExistingVcn}
+    required: true
+
+  custom_cidrs:
+    type: boolean
+    title: "Customize Network CIDRS"
+    description: "Click to customize CIDR ranges, only applicable when creating VCN as part of deployment"
+    required: true
+    default: false
+     
+  publicSubnet:
+    type: oci:core:subnet:id
+    title: "Public Subnet"
+    description: "Select Subnet"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+      vcnId: ${myVcn}
+      hidePrivateSubnet: true
+    visible: ${useExistingVcn}
+    required: true
+
+  privateSubnet:
+    type: oci:core:subnet:id
+    title: "Private Subnet"
+    description: "Select Subnet"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+      vcnId: ${myVcn}
+      hidePublicSubnet: true
+    visible: ${useExistingVcn}
+    required: true
+
+  blockvolumeSubnet:
+    type: oci:core:subnet:id
+    title: "BlockVolume Subnet"
+    description: "Select Subnet - Ensure the Subnet is in the same Availability Domain selected above"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+      vcnId: ${myVcn}
+      hidePublicSubnet: ${hide_public_subnet}
+    visible:
+      and:
+        - ${useExistingVcn}
+        - ${enable_secondary_vnic}
+    required: true
+
+  availability_domain:
+    type: oci:identity:availabilitydomain:name 
+    title: "Availability Domain"
+    description: "Select AD"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    required: true
+
+  worker_instance_shape:
+    type: oci:core:instanceshape:name
+    title: "Shape of Worker Nodes"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    required: true
+    default: "VM.Standard2.8"
+
+  worker_module_count:
+    type: integer
+    minimum: 3
+    title: "Number of Worker Nodes"
+    description: "3 is the minimum requirement"
+    required: true
+    default: 3
+
+  master_instance_shape:
+    type: oci:core:instanceshape:name
+    title: "Shape of Master Nodes"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    required: true
+    default: "VM.Standard2.4"
+
+  master_node_count:
+    type: integer
+    minimum: 3
+    title: "Number of Master Nodes"
+    description: "3 is the minimum requirement (HA Zookeeper)"
+    required: true
+    default: 3
+
+  edge_instance_shape:
+    type: oci:core:instanceshape:name
+    title: "Shape of Edge Node"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    required: true
+
+  ssh_provided_key:
+    type: string
+    title: "SSH Public Key"
+    description: "Copy/Paste the contents of your SSH Public Key"
+    required: true
+    default: ""
+    visible: ${provide_ssh_key}
+
+  hdfs_blocksize_in_gbs:
+    type: integer
+    title: "HDFS Block Volume Size ( GB )"
+    description: "700 to 32,768 "
+    minimum: 700
+    maximum: 32768
+    required: true
+    visible: ${enable_block_volumes}
+
+  block_volumes_per_worker:
+    type: integer
+    title: "Number of Block Volumes for HDFS"
+    description: "0 to 31"
+    minimum: 0 
+    maximum: 31
+    required: true
+    visible: ${enable_block_volumes}
+    default: 3
+
+  customize_block_volume_performance:
+    type: boolean
+    title: "Custom Block Volume Performance"
+    description: "Click to customize Block Volume performance.  Default profile is Balanced. When enabled, only select one sub-option."
+    default: false
+    visible: ${enable_block_volumes}
+
+  block_volume_high_performance:
+    type: boolean
+    title: "High Performance Block Volumes"
+    description: "Click to enable High Performance for HDFS Block Volumes.  This comes at a higher cost per GB."
+    default: false
+    visible: 
+      and:
+        - ${enable_block_volumes}
+        - ${customize_block_volume_performance}
+
+  block_volume_cost_savings:
+    type: boolean
+    title: "Lower Cost Block Volumes"
+    description: "Click to enable Lower Cost for HDFS Block Volumes.  This lowers performance for cost savings per GB."
+    default: false
+    visible:
+      and:
+        - ${enable_block_volumes}
+        - ${customize_block_volume_performance}
+
+  nn_volume_size_in_gbs:
+    type: integer
+    title: "Block Volume Size for NameNode Metadata"
+    description: "500 to 32,768"
+    minimum: 500
+    maximum: 32768
+    required: true
+    visible: ${enable_block_volumes}
+
+  VCN_CIDR:
+    type: string
+    title: "VCN CIDR for VCN"
+    description: "Customize VCN top level CIDR"
+    visible: ${custom_cidrs}
+
+  public_cidr:
+    type: string
+    title: "Public Subnet CIDR"
+    description: "Customize Public Subnet CIDR, ensure this fits in VCN CIDR range."
+    visible: ${custom_cidrs}
+
+  private_cidr:
+    type: string
+    title: "Private Subnet CIDR"
+    description: "Customize Private Subnet CIDR, ensure this fits in VCN CIDR range."
+    visible: ${custom_cidrs}
+
+  blockvolume_cidr:
+    type: string
+    title: "BlockVolume Subnet CIDR"
+    description: "Customize BlockVolume Subnet CIDR, ensure this fits in VCN CIDR range.  This subnet is used on BM hosts to segregate storage network traffic from cluster traffic."
+    visible:
+      and:
+        - ${custom_cidrs}
+        - ${enable_secondary_vnic}
+
+  vcn_dns_label:
+    type: string
+    title: "VCN DNS Label"
+    description: "Set the VCN DNS label to be used when creating VCN.  Default is 'hadoopvcn' which sets the VCN domain to 'hadoopvcn.oraclevcn.com'"
+
+  enable_block_volumes:
+    type: boolean
+    title: "Enable Block Volumes for HDFS"
+    description: "Check to enable Block Volumes for use with HDFS. This is optional for BM.Dense hosts, required for all others."
+    default: true 
+
+  provide_ssh_key:
+    type: boolean
+    title: "Provide SSH Key"
+    description: "Un-Check to generate SSH key as part of deployment process.  This is NOT recommended for persistent environments, you should provide your own key for any production deployment."
+
+  hadoop_version:
+    type: enum
+    enum:
+    - "3.3.0"
+    - "3.2.2"
+    - "3.2.1"
+    - "3.1.4"
+    - "2.10.1"
+    title: "Hadoop Version"
+    description: "Which version of Hadoop to install"
+    required: true
+
+  enable_secondary_vnic:
+    type: boolean
+    title: "Enable Secondary VNIC"
+    description: "Enable a second VNIC on the second physical interface for BM hosts.   This will be used for cluster traffic, allowing the primary interface to be used for storage."
+    visible:
+      or:
+        - or:
+          - eq:
+            - ${worker_instance_shape}
+            - "BM.Standard2.52"
+          - eq:
+            - ${worker_instance_shape}
+            - "BM.DenseIO2.52"
+        - or:
+          - eq:
+            - ${worker_instance_shape}
+            - "BM.Standard.E3.128"
+          - eq:
+            - ${worker_instance_shape}
+            - "BM.Standard.E2.64"
+
+  dynamic_ocpus:
+    type: int
+    title: "Dynamic OCPU"
+    description: "Set OCPU if using Flex Shape (1-64)"
+    default: 0
+
+  master_dynamic_ocpus:
+    type: int
+    title: "Dynamic OCPU"
+    description: "Set OCPU if using Flex Shape (1-64)"
+    default: 0
+
+  edge_dynamic_ocpus:
+    type: int
+    title: "Dynamic OCPU"
+    description: "Set OCPU if using Flex Shape (1-64)"
+    default: 0
+

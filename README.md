@@ -1,31 +1,22 @@
-# oci-quickstart-hadoop
+# oci-hadoop
+Apache Hadoop on OCI
 
-These are Terraform modules that deploy [Hadoop](https://hadoop.apache.org/) on [Oracle Cloud Infrastructure (OCI)](https://cloud.oracle.com/en_US/cloud-infrastructure).
+## Deployment
+This template uses [Oracle Resource Manager](https://docs.oracle.com/en-us/iaas/Content/ResourceManager/Concepts/resourcemanager.htm) to deploy an [Apache Hadoop](http://hadoop.apache.org) cluster on OCI.  The schema driven install will guide you through customization options available prior to deployment.
 
-## About
-Apache Hadoop is an open-source software for reliable, scalable, distributed computing.  Hadoop framework allows distributed processing of large data sets across clusters of computers using simple programming models
+Simply click the Deploy to OCI button here to initiate deployment of the stack.
 
-Oracle Cloud Infrastructure Hadoop Terraform Module deploys a secure Hadoop replica set on Oracle Cloud Infrastructure (OCI) using Terraform.
+[![Deploy to Oracle Cloud](https://oci-resourcemanager-plugin.plugins.oci.oraclecloud.com/latest/deploy-to-oracle-cloud.svg)](https://console.us-ashburn-1.oraclecloud.com/resourcemanager/stacks/create?region=home&zipUrl=https://github.com/oracle-quickstart/oci-hadoop/archive/1.0.0.zip)
 
-## Prerequisites
-1. [Download and install Terraform](https://www.terraform.io/downloads.html) (v0.10.3 or later)
-2. [Download and install the OCI Terraform Provider](https://github.com/oracle/terraform-provider-oci) (v2.0.0 or later)
-3. Export OCI credentials using guidance at [Export Credentials](https://github.com/oracle/terraform-provider-oci#export-credentials).
+## Architecture
+Here is a diagram of the deployment architecture when creating a VCN as part of the stack deployment:
 
-## Usage
+![Deployment Architecture Diagram](images/deployment_architecture.png)
 
-```hcl
-module "hadoop" {
-  source               = "./modules"
-  compartment_id       = "${var.compartment_ocid}"
-  display_name         = "${var.display_name}"
-  availability_domains = "${var.availability_domains}"
-  image_id             = "${var.image_id}"
-  subnet_ids           = "${var.subnet_ids}"
-  ssh_authorized_keys  = "${var.ssh_authorized_keys}"
-  ssh_private_key      = "${var.ssh_private_key}"
-  bastion_host         = "${var.bastion_public_ip}"
-  bastion_user         = "${var.bastion_user}"
-  bastion_private_key  = "${var.bastion_private_key}"
-}
-```
+## Hadoop Components
+Cluster service topology is as follows:
+* Master 1 is NameNode and JobHistory server
+* Master 2 is ResourceManager, Timeline, Proxy and History Server
+* All Master hosts are ZooKeeper servers
+
+Edge node has client libraries deployed in .bashrc for root user.   Cluster hosts have deployment logs in /var/log/OCI-Hadoop.log which can be used to triage any deployment issues.
