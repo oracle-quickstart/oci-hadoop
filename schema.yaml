@@ -294,10 +294,9 @@ variables:
   hadoop_version:
     type: enum
     enum:
+    - "3.3.1"
     - "3.3.0"
     - "3.2.2"
-    - "3.2.1"
-    - "3.1.4"
     - "2.10.1"
     title: "Hadoop Version"
     description: "Which version of Hadoop to install"
