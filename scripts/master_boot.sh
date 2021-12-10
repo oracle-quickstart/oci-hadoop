@@ -285,7 +285,7 @@ log "-->Download Hadoop ${hadoop_version}"
 #
 # Hadoop Setup 
 #
-wget https://www.apache.org/dist/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
+wget --no-check-certificate https://www.apache.org/dist/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
 tar -xf hadoop-${hadoop_version}.tar.gz -C /usr/local/
 chown -R opc:opc /usr/local/hadoop-${hadoop_version}
 chmod -R 755 /usr/local/hadoop-${hadoop_version}
