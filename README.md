@@ -6,7 +6,7 @@ This template uses [Oracle Resource Manager](https://docs.oracle.com/en-us/iaas/
 
 Simply click the Deploy to OCI button here to initiate deployment of the stack.
 
-[![Deploy to Oracle Cloud](https://oci-resourcemanager-plugin.plugins.oci.oraclecloud.com/latest/deploy-to-oracle-cloud.svg)](https://console.us-ashburn-1.oraclecloud.com/resourcemanager/stacks/create?region=home&zipUrl=https://github.com/oracle-quickstart/oci-hadoop/archive/1.0.0.zip)
+[![Deploy to Oracle Cloud](https://oci-resourcemanager-plugin.plugins.oci.oraclecloud.com/latest/deploy-to-oracle-cloud.svg)](https://console.us-ashburn-1.oraclecloud.com/resourcemanager/stacks/create?region=home&zipUrl=https://github.com/oracle-quickstart/oci-hadoop/archive/1.0.1.zip)
 
 ## Architecture
 Here is a diagram of the deployment architecture when creating a VCN as part of the stack deployment:
