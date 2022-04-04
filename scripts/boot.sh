@@ -11,6 +11,15 @@ function waitforMaster() {
         sleep 10
    done"
 }
+function yum_install() {
+package=$1
+success=1
+while [ $success != 0 ]; do
+  yum install $package -y >> $LOG_FILE
+  success=$?
+done;
+}
+
 hadoop_version=`curl -L http://169.254.169.254/opc/v1/instance/metadata/hadoop_version`
 cluster_name=`curl -L http://169.254.169.254/opc/v1/instance/metadata/cluster_name`
 agent_hostname=`curl -L http://169.254.169.254/opc/v1/instance/metadata/agent_hostname`
@@ -54,14 +63,15 @@ sed -i.bak 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 setenforce 0
 EXECNAME="JAVA"
 log "->INSTALL"
-yum install java-1.8.0-openjdk.x86_64 -y >> $LOG_FILE
+yum_install java-1.8.0-openjdk.x86_64 
 EXECNAME="NSCD, NC"
 log "->INSTALL"
-yum install nscd nc -y >> $LOG_FILE
+yum_install nscd 
+yum_install nc 
 systemctl start nscd.service
 EXECNAME="KERBEROS"
 log "->INSTALL"
-yum install krb5-workstation -y >> $LOG_FILE
+yum_install krb5-workstation 
 log "->krb5.conf"
 kdc_fqdn=${ambari}
 realm="hadoop.com"

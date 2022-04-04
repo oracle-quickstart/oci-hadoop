@@ -3,6 +3,14 @@ LOG_FILE="/var/log/OCI-initialize.log"
 log() {
         echo "$(date) [${EXECNAME}]: $*" >> "${LOG_FILE}"
 }
+function yum_install() {
+package=$1
+success=1
+while [ $success != 0 ]; do
+  yum install $package -y >> $LOG_FILE
+  success=$?
+done;
+}
 region=`curl -L http://169.254.169.254/opc/v1/instance/region`
 hadoop_version=`curl -L http://169.254.169.254/opc/v1/instance/metadata/hadoop_version`
 cluster_name=`curl -L http://169.254.169.254/opc/v1/instance/metadata/cluster_name`
@@ -21,14 +29,16 @@ sed -i.bak 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 setenforce 0
 EXECNAME="JAVA"
 log "->INSTALL"
-yum install java-1.8.0-openjdk.x86_64 -y >> $LOG_FILE
+yum_install java-1.8.0-openjdk.x86_64 
 EXECNAME="NSCD, NC, screen"
 log "->INSTALL"
-yum install nscd nc screen -y >> $LOG_FILE
+yum_install nscd 
+yum_install nc 
+yum_install screen 
 systemctl start nscd.service
 EXECNAME="KERBEROS"
 log "->INSTALL"
-yum install krb5-workstation -y >> $LOG_FILE
+yum_install krb5-workstation 
 log "->krb5.conf"
 kdc_fqdn=`hostname -f`
 realm="hadoop.com"
