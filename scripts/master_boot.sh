@@ -68,11 +68,10 @@ setenforce 0
 EXECNAME="JAVA"
 log "->INSTALL"
 yum_install java-1.8.0-openjdk.x86_64
-EXECNAME="NSCD, NC, multitail"
+EXECNAME="NSCD, NC"
 log "->INSTALL"
 yum_install nscd 
 yum_install nc 
-yum_install multitail
 systemctl start nscd.service
 EXECNAME="KERBEROS"
 log "->INSTALL"
