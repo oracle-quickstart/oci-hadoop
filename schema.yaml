@@ -29,12 +29,14 @@ groupings:
   - ${edge_instance_shape}
   - ${publicSubnet}
   - ${edge_dynamic_ocpus}
+  - ${edge_memory_in_gbs}
 - title: "Master Node Configuration"
   variables:
   - ${master_instance_shape}
   - ${master_node_count}
   - ${nn_volume_size_in_gbs}
   - ${master_dynamic_ocpus}
+  - ${master_memory_in_gbs}
   - ${privateSubnet}
 - title: "Worker Node Configuration"
   variables:
@@ -50,6 +52,7 @@ groupings:
   - ${blockvolume_cidr}
   - ${blockvolumeSubnet}
   - ${dynamic_ocpus}
+  - ${memory_in_gbs}
 - title: "Pre-Defined"
   variables:
   - ${region}
@@ -325,19 +328,120 @@ variables:
 
   dynamic_ocpus:
     type: int
-    title: "Dynamic OCPU"
-    description: "Set OCPU if using Flex Shape (1-64)"
+    title: "Worker Dynamic OCPU"
+    description: "Set OCPU if using Flex Shape"
     default: 0
+    visible:
+      or:
+        - eq:
+          - ${worker_instance_shape}
+          - "VM.Standard.E3.Flex"
+        - eq:
+          - ${worker_instance_shape}
+          - "VM.Standard.E4.Flex"
+        - eq:
+          - ${worker_instance_shape}
+          - "VM.Optimized3.Flex"
+        - eq:
+          - ${worker_instance_shape}
+          - "VM.Standard.A1.Flex"
+
+  memory_in_gbs:
+    type: int
+    title: "Worker Dynamic Memory"
+    description: "Set Memory if using Flex Shape"
+    default: 0
+    visible:
+      or:
+        - eq:
+          - ${worker_instance_shape}
+          - "VM.Standard.E3.Flex"
+        - eq:
+          - ${worker_instance_shape}
+          - "VM.Standard.E4.Flex"
+        - eq:
+          - ${worker_instance_shape}
+          - "VM.Optimized3.Flex"
+        - eq:
+          - ${worker_instance_shape}
+          - "VM.Standard.A1.Flex"
 
   master_dynamic_ocpus:
     type: int
-    title: "Dynamic OCPU"
-    description: "Set OCPU if using Flex Shape (1-64)"
+    title: "Master Dynamic OCPU"
+    description: "Set OCPU if using Flex Shape"
     default: 0
+    visible:
+      or:
+        - eq:
+          - ${master_instance_shape}
+          - "VM.Standard.E3.Flex"
+        - eq:
+          - ${master_instance_shape}
+          - "VM.Standard.E4.Flex"
+        - eq:
+          - ${master_instance_shape}
+          - "VM.Optimized3.Flex"
+        - eq:
+          - ${master_instance_shape}
+          - "VM.Standard.A1.Flex"
+
+  master_memory_in_gbs:
+    type: int
+    title: "Master Dynamic Memory"
+    description: "Set Memory if using Flex Shape"
+    default: 0
+    visible:
+      or:
+        - eq:
+          - ${master_instance_shape}
+          - "VM.Standard.E3.Flex"
+        - eq:
+          - ${master_instance_shape}
+          - "VM.Standard.E4.Flex"
+        - eq:
+          - ${master_instance_shape}
+          - "VM.Optimized3.Flex"
+        - eq:
+          - ${master_instance_shape}
+          - "VM.Standard.A1.Flex"
 
   edge_dynamic_ocpus:
     type: int
     title: "Dynamic OCPU"
-    description: "Set OCPU if using Flex Shape (1-64)"
+    description: "Set OCPU if using Flex Shape"
     default: 0
+    visible:
+      or:
+        - eq:
+          - ${edge_instance_shape}
+          - "VM.Standard.E3.Flex"
+        - eq:
+          - ${edge_instance_shape}
+          - "VM.Standard.E4.Flex"
+        - eq:
+          - ${edge_instance_shape}
+          - "VM.Optimized3.Flex"
+        - eq:
+          - ${edge_instance_shape}
+          - "VM.Standard.A1.Flex"
 
+  edge_memory_in_gbs:
+    type: int
+    title: "Edge Dynamic Memory"
+    description: "Set Memory if using Flex Shape"
+    default: 0
+    visible:
+      or:
+        - eq:
+          - ${edge_instance_shape}
+          - "VM.Standard.E3.Flex"
+        - eq:
+          - ${edge_instance_shape}
+          - "VM.Standard.E4.Flex"
+        - eq:
+          - ${edge_instance_shape}
+          - "VM.Optimized3.Flex"
+        - eq:
+          - ${edge_instance_shape}
+          - "VM.Standard.A1.Flex"

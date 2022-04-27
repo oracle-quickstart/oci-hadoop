@@ -23,7 +23,9 @@ variable "worker_module_count" {}
 variable "worker_count" {}
 variable "hadoop_version" {}
 variable "cluster_name" {}
+variable "is_flex_shape" {}
 variable "dynamic_ocpus" {}
+variable "memory_in_gbs" {}
 variable "UsePrefix" {}
 # ---------------------------------------------------------------------------------------------------------------------
 # Optional variables

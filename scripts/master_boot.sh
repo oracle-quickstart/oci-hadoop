@@ -3,12 +3,12 @@ LOG_FILE="/var/log/OCI-Hadoop.log"
 log() { 
 	echo "$(date) [${EXECNAME}]: $*" >> "${LOG_FILE}" 
 }
-function waitforMaster() { 
-	timeout 600  \
-	bash -c "while ! echo exit | nc -z -w5  ${masterhost} ${port}
-	do
-	echo 'Waiting for ${masterhost}:${port}'
-	sleep 10
+function waitforMaster() {
+        timeout 600  \
+        bash -c "while ! echo exit | nc -z -w5  ${master1fqdn} 8020
+        do
+        echo 'Waiting for ${master1fqdn}:8020 RPC NameNode service'
+        sleep 10
    done"
 }
 function yum_install() {
@@ -34,6 +34,9 @@ block_volume_count=1
 enable_secondary_vnic=`curl -L http://169.254.169.254/opc/v1/instance/metadata/enable_secondary_vnic`
 worker_shape=`curl -L http://169.254.169.254/opc/v1/instance/metadata/worker_shape`
 worker_count=`curl -L http://169.254.169.254/opc/v1/instance/metadata/worker_count`
+worker_ocpus=`curl -s -L http://169.254.169.254/opc/v1/instance/metadata/worker_ocpus`
+worker_memory=`curl -s -L http://169.254.169.254/opc/v1/instance/metadata/worker_memory`
+worker_memory=$((worker_memory*1024))
 # This needs to be customized if hostnames are modified from default in Terraform
 master1fqdn="master-1.${cluster_domain}"
 master2fqdn="master-2.${cluster_domain}"
@@ -320,49 +323,67 @@ export HADOOP_CLASSPATH=\$HADOOP_CLASSPATH:/usr/local/hadoop-${hadoop_version}/e
 " >>/usr/local/hadoop-${hadoop_version}/etc/hadoop/hadoop-env.sh
 # Build Tuning Params
 worker_shape_length=`echo ${worker_shape} | gawk -F '.' '{print NF}'`
-case ${worker_shape_length} in 
-	3)
-	ocpu=`echo ${worker_shape} | cut -d '.' -f 3`
-	if [ ${worker_shape} = "BM.HPC2.36" ]; then 
-		RAM=786432
-	else
-		gen_type=`echo $worker_shape | cut -d '.' -f2`
-		case $gen_type in 
-			Standard1|DenseIO1)
-			RAM=$((7168*ocpu))
-			;;
+case ${worker_shape_length} in
+        3)
+        ocpu=`echo ${worker_shape} | cut -d '.' -f 3`
+        if [ ${worker_shape} = "BM.HPC2.36" ]; then
+                RAM=786432
+        else
+                gen_type=`echo $worker_shape | cut -d '.' -f2`
+                case $gen_type in
+                        Standard1|DenseIO1)
+                        RAM=$((7168*ocpu))
+                        ;;
 
-			Standard2|DenseIO2)
-			RAM=$((15360*ocpu))
-			;;
+                        Standard2|DenseIO2)
+                        RAM=$((15360*ocpu))
+                        ;;
 
-			esac
-	fi
+                        Standard3)
+                        ocpu=${worker_ocpus}
+                        RAM=${worker_memory}
+                        ;;
+
+                        esac
+        fi
+        ;;
+
+        4)
+        third_field=`echo ${worker_shape} | cut -d '.' -f 3`
+        case ${third_field} in
+                B1)
+                ocpu=`echo ${worker_shape} | cut -d '.' -f 4`
+                RAM=$((12288*ocpu))
+                ;;
+                E2)
+                ocpu=`echo ${worker_shape} | cut -d '.' -f 4`
+                RAM=$((8192*ocpu))
+                ;;
+
+                E3|E4)
+                ocpu=${worker_ocpus}
+                RAM=${worker_memory}
+                ;;
+
+                *)
+                ## Safety Catch-all
+                ocpu=1
+                RAM=8192
+                ;;
+	esac
 	;;
 
-	4)
-	ocpu=`echo ${worker_shape} | cut -d '.' -f 4`
-	third_field=`echo ${worker_shape} | cut -d '.' -f 3`
-	if [ ${third_field} = "E2" ]; then 
-		RAM=$((8192*ocpu))
-	elif [ ${third_field} = "B1" ]; then 
-		RAM=$((12288*ocpu))
-	else
-		RAM=$((16384*ocpu))
-	fi
-	;;
+        5)
+        # E2.Micro host
+        ocpu=1
+        RAM=1024
+        ;;
 
-	5)
-	# E2.Micro host
-	ocpu=1
-	RAM=1024
-	;;
-
-	*)
-	## Safety Catch-all
-	ocpu=1
-	RAM=4096
-	;;
+        *)
+        ## Safety Catch-all
+        ocpu=1
+        RAM=8192
+        ;;
 esac
 # Set system overhead here, defaulting to 90%
 yarn_nodemanager_resource_memory_mb=$(((RAM/10)*9))
@@ -371,7 +392,7 @@ yarn_scheduler_maximum_allocation__mb=${yarn_nodemanager_resource_memory_mb}
 # Build HDFS Disk Count
 log "->Building HDFS disk count for Worker ${worker_shape} with ${worker_block_count} block volumes."
 case ${worker_shape} in 
-	BM.DenseIO2.52)
+	BM.DenseIO2.52|BM.DenseIO.E4.128)
 	nvme_disks=8
 	;;
 	VM.DenseIO2.24)
@@ -598,9 +619,11 @@ case ${hostfqdn} in
         myid=2
         zk_setup >> ${LOG_FILE}
         /usr/local/hadoop-${hadoop_version}/bin/hdfs --daemon start zkfc >> ${LOG_FILE}
+	waitforMaster >> ${LOG_FILE}
         log "->Setting up ResourceManager"
 	/usr/local/hadoop-${hadoop_version}/bin/yarn resourcemanager -format-state-store >> ${LOG_FILE} 2>&1
 	sleep 5
+	log "-> Starting ResourceManager"
         /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start resourcemanager >> ${LOG_FILE}
 	log "->Setting up TimelineServer"
 	/usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start timelineserver >> ${LOG_FILE}

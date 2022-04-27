@@ -30,6 +30,9 @@ enable_secondary_vnic=`curl -L http://169.254.169.254/opc/v1/instance/metadata/e
 worker_shape=`curl -L http://169.254.169.254/opc/v1/instance/shape`
 worker_block_count=`curl -L http://169.254.169.254/opc/v1/instance/metadata/worker_block_volume_count`
 worker_count=`curl -L http://169.254.169.254/opc/v1/instance/metadata/worker_count`
+worker_ocpus=`curl -s -L http://169.254.169.254/opc/v1/instance/metadata/worker_ocpus`
+worker_memory=`curl -s -L http://169.254.169.254/opc/v1/instance/metadata/worker_memory`
+worker_memory=$((worker_memory*1024))
 # This needs to be customized if hostnames are modified from default in Terraform
 master1fqdn="master-1.${cluster_domain}"
 master2fqdn="master-2.${cluster_domain}"
@@ -341,21 +344,39 @@ case ${worker_shape_length} in
                         RAM=$((15360*ocpu))
                         ;;
 
+                        Standard3)
+                        ocpu=${worker_ocpus}
+                        RAM=${worker_memory}
+                        ;;
+
                         esac
         fi
         ;;
 
         4)
-        ocpu=`echo ${worker_shape} | cut -d '.' -f 4`
         third_field=`echo ${worker_shape} | cut -d '.' -f 3`
-        if [ ${third_field} = "E2" ]; then 
-                RAM=$((8192*ocpu))
-        elif [ ${third_field} = "B1" ]; then
+        case ${third_field} in
+                B1)
+                ocpu=`echo ${worker_shape} | cut -d '.' -f 4`
                 RAM=$((12288*ocpu))
-        else
-                RAM=$((16384*ocpu))
-        fi
-        ;;
+                ;;
+                E2)
+                ocpu=`echo ${worker_shape} | cut -d '.' -f 4`
+                RAM=$((8192*ocpu))
+                ;;
+
+                E3|E4)
+                ocpu=${worker_ocpus}
+                RAM=${worker_memory}
+                ;;
+
+                *)
+                ## Safety Catch-all
+                ocpu=1
+                RAM=8192
+                ;;
+	esac
+	;;
 
         5)
         # E2.Micro host
@@ -366,7 +387,7 @@ case ${worker_shape_length} in
         *)
         ## Safety Catch-all
         ocpu=1
-        RAM=4096
+        RAM=8192
         ;;
 esac
 # Set system overhead here, defaulting to 90%
@@ -374,7 +395,7 @@ yarn_nodemanager_resource_memory_mb=$(((RAM/10)*9))
 yarn_scheduler_maximum_allocation__mb=$yarn_nodemanager_resource_memory_mb
 # Build HDFS Disk Count
 case ${worker_shape} in 
-	BM.DenseIO2.52)
+	BM.DenseIO2.52|BM.DenseIO.E4.128))
 	nvme_disks=8
 	;;
 	VM.DenseIO2.24)

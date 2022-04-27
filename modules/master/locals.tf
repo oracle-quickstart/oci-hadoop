@@ -1,3 +1,3 @@
 locals {
-  is_master_flex_shape = var.master_instance_shape == "VM.Standard.E3.Flex" ? [var.dynamic_ocpus] : []
+  is_master_flex_shape = var.is_flex_shape ? [{ ocpus = var.dynamic_ocpus, memory_in_gbs = var.memory_in_gbs }] : []
 }

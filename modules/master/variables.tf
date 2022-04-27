@@ -10,12 +10,16 @@ variable "instances" {}
 variable "subnet_id" {}
 variable "user_data" {}
 variable "image_ocid" {}
+variable "is_flex_shape" {}
 variable "dynamic_ocpus" {}
+variable "memory_in_gbs" {}
 variable "hadoop_version" {}
 variable "cluster_name" {}
 variable "worker_shape" {}
 variable "worker_block_volume_count" {}
 variable "worker_count" {}
+variable "worker_ocpus" {}
+variable "worker_memory" {}
 variable "worker_domain" {}
 variable "UsePrefix" {}
 # ---------------------------------------------------------------------------------------------------------------------

@@ -87,11 +87,23 @@ variable "dynamic_ocpus" {
   default = "0"
 }
 
+variable "memory_in_gbs" {
+  default = "0"
+}
+
 variable "master_dynamic_ocpus" {
   default = "0"
 }
 
+variable "master_memory_in_gbs" {
+  default = "0"
+}
+
 variable "edge_dynamic_ocpus" {
+  default = "0"
+}
+
+variable "edge_memory_in_gbs" {
   default = "0"
 }
 # ---------------------------------------------------------------------------------------------------------------------

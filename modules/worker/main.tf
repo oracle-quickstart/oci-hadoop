@@ -30,12 +30,16 @@ resource "oci_core_instance" "Worker" {
     UsePrefix        = var.UsePrefix
     hadoop_version      = var.hadoop_version
     worker_count        = var.worker_count
+    worker_ocpus        = var.dynamic_ocpus
+    worker_memory       = var.memory_in_gbs
   }
 
   dynamic "shape_config" {
     for_each = local.is_worker_flex_shape
       content {
-        ocpus = shape_config.value
+	baseline_ocpu_utilization="BASELINE_1_1"
+        ocpus = shape_config.value.ocpus
+        memory_in_gbs = shape_config.value.memory_in_gbs
       }
   }
 

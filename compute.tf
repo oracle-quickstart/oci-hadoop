@@ -42,7 +42,9 @@ module "edge" {
 	worker_block_volume_count = var.enable_block_volumes ? var.block_volumes_per_worker : 0
 	worker_domain = data.null_data_source.values.outputs["worker_domain"]
         hadoop_version = var.hadoop_version
+	is_flex_shape = contains(["VM.Standard.E3.Flex", "VM.Standard.E4.Flex", "VM.Optimized3.Flex", "VM.Standard3.Flex"], var.edge_instance_shape)
 	dynamic_ocpus = var.edge_dynamic_ocpus
+        memory_in_gbs = var.edge_memory_in_gbs
 }
 
 module "master" {
@@ -61,9 +63,13 @@ module "master" {
 	cluster_name = var.cluster_name
 	UsePrefix = var.UsePrefix
 	worker_shape = var.worker_instance_shape
+	worker_ocpus = var.dynamic_ocpus
+        worker_memory = var.memory_in_gbs
 	worker_block_volume_count = var.enable_block_volumes ? var.block_volumes_per_worker : 0
 	worker_domain = data.null_data_source.values.outputs["worker_domain"]
+	is_flex_shape = contains(["VM.Standard.E3.Flex", "VM.Standard.E4.Flex", "VM.Optimized3.Flex", "VM.Standard3.Flex"], var.master_instance_shape)
 	dynamic_ocpus = var.master_dynamic_ocpus
+        memory_in_gbs = var.master_memmory_in_gbs
 }
 
 module "worker" {
@@ -90,5 +96,7 @@ module "worker" {
 	cluster_name = var.cluster_name
 	UsePrefix = var.UsePrefix
 	hadoop_version = var.hadoop_version
+	is_flex_shape = contains(["VM.Standard.E3.Flex", "VM.Standard.E4.Flex", "VM.Optimized3.Flex", "VM.Standard3.Flex"], var.worker_instance_shape)
 	dynamic_ocpus = var.dynamic_ocpus
+        memory_in_gbs = var.memory_in_gbs
 }

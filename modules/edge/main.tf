@@ -35,7 +35,9 @@ resource "oci_core_instance" "Edge" {
   dynamic "shape_config" {
     for_each = local.is_edge_flex_shape
       content {
-        ocpus = shape_config.value
+	baseline_ocpu_utilization="BASELINE_1_1"
+        ocpus = shape_config.value.ocpus
+        memory_in_gbs = shape_config.value.memory_in_gbs
       }
   }
   timeouts {

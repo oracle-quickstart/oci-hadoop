@@ -18,7 +18,9 @@ variable "cluster_name" {}
 variable "private_subnet" {}
 variable "public_subnet" {}
 variable "worker_domain" {}
+variable "is_flex_shape" {}
 variable "dynamic_ocpus" {}
+variable "memory_in_gbs" {}
 variable "hadoop_version" {}
 variable "UsePrefix" {}
 # ---------------------------------------------------------------------------------------------------------------------
