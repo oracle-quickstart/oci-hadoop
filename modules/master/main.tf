@@ -27,6 +27,9 @@ resource "oci_core_instance" "Master" {
     hadoop_version      = var.hadoop_version
     hadoop_par          = var.hadoop_par
     zk_version          = var.zk_version
+    install_hive        = var.install_hive
+    hive_version        = var.hive_version
+    hive_par            = var.hive_par
     cluster_name        = var.cluster_name
     UsePrefix        = var.UsePrefix
     worker_shape        = var.worker_shape

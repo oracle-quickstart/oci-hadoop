@@ -119,8 +119,18 @@ variable "hadoop_version" {
 variable "hadoop_par" {}
 
 variable "zk_version" {
-    default = "3.8.0"
+  default = "3.8.0"
 }
+
+variable "install_hive" {
+  default = "false"
+}
+
+variable "hive_version" {
+  default = "3.1.3"
+}
+
+variable "hive_par" {}
 
 variable "worker_instance_shape" {
   default = "VM.Standard2.8"

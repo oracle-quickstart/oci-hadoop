@@ -30,6 +30,9 @@ resource "oci_core_instance" "Worker" {
     UsePrefix        = var.UsePrefix
     hadoop_version      = var.hadoop_version
     hadoop_par          = var.hadoop_par
+    install_hive        = var.install_hive
+    hive_version        = var.hive_version
+    hive_par            = var.hive_par
     worker_count        = var.worker_count
     worker_ocpus        = var.dynamic_ocpus
     worker_memory       = var.memory_in_gbs

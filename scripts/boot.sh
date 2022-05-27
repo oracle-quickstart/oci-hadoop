@@ -22,6 +22,9 @@ done;
 
 hadoop_version=`curl -L http://169.254.169.254/opc/v1/instance/metadata/hadoop_version`
 hadoop_par=`curl -L http://169.254.169.254/opc/v1/instance/metadata/hadoop_par`
+install_hive=`curl -L http://169.254.169.254/opc/v1/instance/metadata/install_hive`
+hive_version=`curl -L http://169.254.169.254/opc/v1/instance/metadata/hive_version`
+hive_par=`curl -L http://169.254.169.254/opc/v1/instance/metadata/hive_par`
 cluster_name=`curl -L http://169.254.169.254/opc/v1/instance/metadata/cluster_name`
 agent_hostname=`curl -L http://169.254.169.254/opc/v1/instance/metadata/agent_hostname`
 fqdn_fields=`echo -e ${agent_hostname} | gawk -F '.' '{print NF}'`
@@ -68,6 +71,10 @@ setenforce 0
 EXECNAME="JAVA"
 log "->INSTALL"
 yum_install java-1.8.0-openjdk.x86_64 
+log "->Set global TTL"
+javaver=`ssh -i .ssh/id_rsa cdh-utility1 'alternatives --list | grep ^java'`
+javapath=`echo ${javaver} | gawk '{print $3}'| cut -d '/' -f 1-6`
+sed -i 's/#networkaddress.cache.ttl=-1/networkaddress.cache.ttl=60/g' ${javapath}/lib/security/java.security
 EXECNAME="NSCD, NC"
 log "->INSTALL"
 yum_install nscd 
@@ -305,14 +312,39 @@ log "-->Download Hadoop ${hadoop_version}"
 #
 if [ ${hadoop_version} = "custom" ]; then 
 	wget --no-check-certificate ${hadoop_par} -O hadoop-custom.tar.gz
-	tar -zxvf hadoop-custom.tar.gz -C /usr/local/
+	tar -zxf hadoop-custom.tar.gz -C /usr/local/
 	hadoop_version=`ls /usr/local/ | grep hadoop | cut -d '-' -f 2`
 else
 	wget --no-check-certificate https://www.apache.org/dist/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
 	tar -xf hadoop-${hadoop_version}.tar.gz -C /usr/local/
 fi
+log "--> Download OCI HDFS Object Storage connector"
+wget --no-check-certificate https://github.com/oracle/oci-hdfs-connector/releases/download/v3.3.1.0.3.4/oci-hdfs.zip
+unzip oci-hdfs.zip -d /usr/local/hadoop-${hadoop_version}/share/hadoop/common/
+log "--> Setting ownership for /usr/local/hadoop-${hadoop_version}"
 chown -R opc:opc /usr/local/hadoop-${hadoop_version}
 chmod -R 755 /usr/local/hadoop-${hadoop_version}
+log "-->Cleanup"
+rm -f oci-hdfs.zip
+rm -f hadoop-${hadoop_version}.tar.gz
+rm -f hadoop-custom.tar.gz
+
+if [ ${install_hive} = "true" ]; then
+	log "-->HIVE setup" 
+	if [ ${hive_version} = "custom" ]; then 
+		wget --no-check-certificate ${hive_par} -O hive-custom.tar.gz
+		tar -zxf hive-custom.tar.gz -C /usr/local/
+		hive_version=`ls /usr/local/ | grep hive | cut -d '-' -f 2`
+	else
+		wget --no-check-certificate https://dlcdn.apache.org/hive/hive-${hive_version}/apache-hive-${hive_version}-bin.tar.gz
+		tar -xf apache-hive-${hive_version}-bin.tar.gz -C /usr/local/
+	fi
+	chown -R opc:opc /usr/local/hive-${hive_version}
+	chmod -R 755 /usr/local/hive-${hive_version}
+	log "-->Cleanup"
+	rm -f apache-hive-${hive_version}-bin.tar.gz
+	rm -f hive-custom.tar.gz
+fi
 
 #Setup user-env
 echo " 

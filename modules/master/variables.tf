@@ -16,6 +16,9 @@ variable "memory_in_gbs" {}
 variable "hadoop_version" {}
 variable "hadoop_par" {}
 variable "zk_version" {}
+variable "install_hive" {}
+variable "hive_version" {}
+variable "hive_par" {}
 variable "cluster_name" {}
 variable "worker_shape" {}
 variable "worker_block_volume_count" {}

@@ -43,6 +43,9 @@ module "edge" {
 	worker_domain = data.null_data_source.values.outputs["worker_domain"]
         hadoop_version = var.hadoop_version
 	hadoop_par = var.hadoop_par
+        install_hive = var.install_hive
+        hive_version = var.hive_version
+        hive_par = var.hive_par
 	is_flex_shape = contains(["VM.Standard.E3.Flex", "VM.Standard.E4.Flex", "VM.Optimized3.Flex", "VM.Standard3.Flex"], var.edge_instance_shape)
 	dynamic_ocpus = var.edge_dynamic_ocpus
         memory_in_gbs = var.edge_memory_in_gbs
@@ -63,6 +66,9 @@ module "master" {
 	hadoop_version = var.hadoop_version
 	hadoop_par = var.hadoop_par
 	zk_version = var.zk_version
+	install_hive = var.install_hive
+	hive_version = var.hive_version
+	hive_par = var.hive_par
 	cluster_name = var.cluster_name
 	UsePrefix = var.UsePrefix
 	worker_shape = var.worker_instance_shape
@@ -100,6 +106,9 @@ module "worker" {
 	UsePrefix = var.UsePrefix
 	hadoop_version = var.hadoop_version
 	hadoop_par = var.hadoop_par
+        install_hive = var.install_hive
+        hive_version = var.hive_version
+        hive_par = var.hive_par
 	is_flex_shape = contains(["VM.Standard.E3.Flex", "VM.Standard.E4.Flex", "VM.Optimized3.Flex", "VM.Standard3.Flex"], var.worker_instance_shape)
 	dynamic_ocpus = var.dynamic_ocpus
         memory_in_gbs = var.memory_in_gbs
