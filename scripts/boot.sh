@@ -402,7 +402,7 @@ yarn_nodemanager_resource_memory_mb=$(((RAM/10)*9))
 yarn_scheduler_maximum_allocation__mb=$yarn_nodemanager_resource_memory_mb
 # Build HDFS Disk Count
 case ${worker_shape} in 
-	BM.DenseIO2.52|BM.DenseIO.E4.128))
+	BM.DenseIO2.52|BM.DenseIO.E4.128)
 	nvme_disks=8
 	;;
 	VM.DenseIO2.24)
