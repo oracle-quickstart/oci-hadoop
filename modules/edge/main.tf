@@ -29,6 +29,7 @@ resource "oci_core_instance" "Edge" {
     private_subnet      = var.private_subnet
     worker_domain       = var.worker_domain
     hadoop_version      = var.hadoop_version
+    hadoop_par          = var.hadoop_par
     UsePrefix           = var.UsePrefix
   }
 

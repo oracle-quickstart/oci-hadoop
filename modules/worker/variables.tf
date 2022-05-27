@@ -22,6 +22,7 @@ variable "worker_domain" {}
 variable "worker_module_count" {}
 variable "worker_count" {}
 variable "hadoop_version" {}
+variable "hadoop_par" {}
 variable "cluster_name" {}
 variable "is_flex_shape" {}
 variable "dynamic_ocpus" {}

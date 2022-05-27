@@ -22,6 +22,7 @@ variable "is_flex_shape" {}
 variable "dynamic_ocpus" {}
 variable "memory_in_gbs" {}
 variable "hadoop_version" {}
+variable "hadoop_par" {}
 variable "UsePrefix" {}
 # ---------------------------------------------------------------------------------------------------------------------
 # Optional variables

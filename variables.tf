@@ -113,7 +113,13 @@ variable "edge_memory_in_gbs" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 variable "hadoop_version" { 
-    default = "3.3.0" 
+    default = "3.3.3" 
+}
+
+variable "hadoop_par" {}
+
+variable "zk_version" {
+    default = "3.8.0"
 }
 
 variable "worker_instance_shape" {
@@ -182,7 +188,7 @@ variable "cluster_name" {
 }
 
 variable "UsePrefix" {
-  default = "true"
+  default = "False"
 }
 
 

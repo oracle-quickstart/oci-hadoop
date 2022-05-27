@@ -21,6 +21,7 @@ done;
 }
 
 hadoop_version=`curl -L http://169.254.169.254/opc/v1/instance/metadata/hadoop_version`
+hadoop_par=`curl -L http://169.254.169.254/opc/v1/instance/metadata/hadoop_par`
 cluster_name=`curl -L http://169.254.169.254/opc/v1/instance/metadata/cluster_name`
 agent_hostname=`curl -L http://169.254.169.254/opc/v1/instance/metadata/agent_hostname`
 fqdn_fields=`echo -e ${agent_hostname} | gawk -F '.' '{print NF}'`
@@ -302,8 +303,14 @@ log "-->Download Hadoop ${hadoop_version}"
 #
 # Hadoop Setup 
 #
-wget --no-check-certificate https://www.apache.org/dist/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
-tar -xf hadoop-${hadoop_version}.tar.gz -C /usr/local/
+if [ ${hadoop_version} = "custom" ]; then 
+	wget --no-check-certificate ${hadoop_par} -O hadoop-custom.tar.gz
+	tar -zxvf hadoop-custom.tar.gz -C /usr/local/
+	hadoop_version=`ls /usr/local/ | grep hadoop | cut -d '-' -f 2`
+else
+	wget --no-check-certificate https://www.apache.org/dist/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
+	tar -xf hadoop-${hadoop_version}.tar.gz -C /usr/local/
+fi
 chown -R opc:opc /usr/local/hadoop-${hadoop_version}
 chmod -R 755 /usr/local/hadoop-${hadoop_version}
 

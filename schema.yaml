@@ -1,6 +1,6 @@
 title: Sample input variable schema
 schemaVersion: 1.1.0
-version: "20210506"
+version: "20220527"
 locale: "en"
 groupings:
 - title: "SSH Key"
@@ -24,6 +24,8 @@ groupings:
   - ${cluster_name}
   - ${UsePrefix}
   - ${hadoop_version}
+  - ${hadoop_par}
+  - ${zk_version}
 - title: "Edge Node Configuration"
   variables:
   - ${edge_instance_shape}
@@ -78,8 +80,8 @@ variables:
   UsePrefix:
     type: boolean
     title: "Prefix Name"
-    description: "Use prefix with instance names"
-    default: true
+    description: "Prefix instance names with Cluster name e.g. Cluster-worker-1"
+    default: false 
     required: false
 
   useExistingVcn:
@@ -297,13 +299,38 @@ variables:
   hadoop_version:
     type: enum
     enum:
+    - "3.3.3"
+    - "3.3.2"
     - "3.3.1"
-    - "3.3.0"
-    - "3.2.2"
+    - "3.2.3"
     - "2.10.1"
+    - "custom"
     title: "Hadoop Version"
-    description: "Which version of Hadoop to install"
+    description: "Which version of Hadoop to install. Select custom if you want to provide your own software .tar.gz for deployment."
     required: true
+    default: "3.3.3"
+
+  hadoop_par:
+    type: string
+    title: "Hadoop custom deployment"
+    description: "Paste a valid target to .tar.gz for Haodop deployment.  The .tar.gz should contain a top level directory 'hadoop-<version>'.  Using a pre-authenticated request (PAR) from OCI Object Storage is a great way to do this."
+    visible: 
+      and:
+        - "true"
+        - eq:
+          - ${hadoop_version}
+          - "custom"
+
+  zk_version:
+    type: enum
+    enum:
+    - "3.5.9"
+    - "3.6.3"
+    - "3.7.1"
+    - "3.8.0"
+    title: "Zookeeper Version"
+    description: "Select which version of Zookeeper to install"
+    default: "3.8.0"
 
   enable_secondary_vnic:
     type: boolean

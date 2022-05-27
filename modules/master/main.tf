@@ -25,6 +25,8 @@ resource "oci_core_instance" "Master" {
 
   extended_metadata = {
     hadoop_version      = var.hadoop_version
+    hadoop_par          = var.hadoop_par
+    zk_version          = var.zk_version
     cluster_name        = var.cluster_name
     UsePrefix        = var.UsePrefix
     worker_shape        = var.worker_shape

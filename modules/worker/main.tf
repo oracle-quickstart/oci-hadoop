@@ -29,6 +29,7 @@ resource "oci_core_instance" "Worker" {
     cluster_name        = var.cluster_name
     UsePrefix        = var.UsePrefix
     hadoop_version      = var.hadoop_version
+    hadoop_par          = var.hadoop_par
     worker_count        = var.worker_count
     worker_ocpus        = var.dynamic_ocpus
     worker_memory       = var.memory_in_gbs

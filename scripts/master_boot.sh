@@ -20,6 +20,8 @@ while [ $success != 0 ]; do
 done;
 }
 hadoop_version=`curl -L http://169.254.169.254/opc/v1/instance/metadata/hadoop_version`
+hadoop_par=`curl -L http://169.254.169.254/opc/v1/instance/metadata/hadoop_par`
+zk_version=`curl -L http://169.254.169.254/opc/v1/instance/metadata/zk_version`
 cluster_name=`curl -L http://169.254.169.254/opc/v1/instance/metadata/cluster_name`
 agent_hostname=`curl -L http://169.254.169.254/opc/v1/instance/metadata/agent_hostname`
 fqdn_fields=`echo -e ${agent_hostname} | gawk -F '.' '{print NF}'`
@@ -297,8 +299,14 @@ log "-->Download Hadoop ${hadoop_version}"
 #
 # Hadoop Setup 
 #
-wget --no-check-certificate https://www.apache.org/dist/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
-tar -xf hadoop-${hadoop_version}.tar.gz -C /usr/local/
+if [ ${hadoop_version} = "custom" ]; then
+        wget --no-check-certificate ${hadoop_par} -O hadoop-custom.tar.gz
+        tar -zxvf hadoop-custom.tar.gz -C /usr/local/
+        hadoop_version=`ls /usr/local/ | grep hadoop | cut -d '-' -f 2`
+else
+        wget --no-check-certificate https://www.apache.org/dist/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
+        tar -xf hadoop-${hadoop_version}.tar.gz -C /usr/local/
+fi
 chown -R opc:opc /usr/local/hadoop-${hadoop_version}
 chmod -R 755 /usr/local/hadoop-${hadoop_version}
 
@@ -581,8 +589,8 @@ echo "</configuration>" >> /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-s
 log "->Start Hadoop Services"
 zk_setup (){
         #Zookeeper
-	wget https://downloads.apache.org/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz
-        tar -xf apache-zookeeper-3.6.2-bin.tar.gz -C /usr/local/
+	wget https://downloads.apache.org/zookeeper/zookeeper-${zk_version}/apache-zookeeper-${zk_version}-bin.tar.gz
+        tar -xf apache-zookeeper-${zk_version}-bin.tar.gz -C /usr/local/
 	mkdir -p /data0/zk
 	echo ${myid} > /data0/zk/myid
 	mkdir -p /data0/nn
@@ -596,8 +604,8 @@ syncLimit=2
 server.1=${master1fqdn}:2888:3888
 server.2=${master2fqdn}:2888:3888
 server.3=${master3fqdn}:2888:3888
-" >> /usr/local/apache-zookeeper-3.6.2-bin/conf/zoo.cfg
-/usr/local/apache-zookeeper-3.6.2-bin/bin/zkServer.sh start
+" >> /usr/local/apache-zookeeper-${zk_version}-bin/conf/zoo.cfg
+/usr/local/apache-zookeeper-${zk_version}-bin/bin/zkServer.sh start
 }
 source ~/.bashrc
 case ${hostfqdn} in
