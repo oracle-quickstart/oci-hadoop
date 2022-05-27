@@ -608,6 +608,7 @@ server.3=${master3fqdn}:2888:3888
 /usr/local/apache-zookeeper-${zk_version}-bin/bin/zkServer.sh start
 }
 source ~/.bashrc
+hadoop_major_version=`echo $hadoop_version | cut -d '.' -f 1`
 case ${hostfqdn} in
         ${master1fqdn})
         log "->Setting up Zookeeper"
@@ -620,7 +621,15 @@ case ${hostfqdn} in
         /usr/local/hadoop-${hadoop_version}/bin/hdfs namenode -format ${cluster_name} >> ${LOG_FILE} 2>&1
 	sleep 10
 	log "->Starting NameNode"
-        /usr/local/hadoop-${hadoop_version}/bin/hdfs --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start namenode >> ${LOG_FILE}
+	case $hadoop_major_version in 
+		3)
+	        /usr/local/hadoop-${hadoop_version}/bin/hdfs --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start namenode >> ${LOG_FILE}
+		;;
+
+		2)
+		/usr/local/hadoop-${hadoop_version}/sbin/hadoop-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --script hdfs start namenode
+		;;
+	esac
         ;;
         ${master2fqdn})
         log "->Setting up Zookeeper"
@@ -628,17 +637,33 @@ case ${hostfqdn} in
         zk_setup >> ${LOG_FILE}
         /usr/local/hadoop-${hadoop_version}/bin/hdfs --daemon start zkfc >> ${LOG_FILE}
 	waitforMaster >> ${LOG_FILE}
-        log "->Setting up ResourceManager"
-	/usr/local/hadoop-${hadoop_version}/bin/yarn resourcemanager -format-state-store >> ${LOG_FILE} 2>&1
-	sleep 5
-	log "-> Starting ResourceManager"
-        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start resourcemanager >> ${LOG_FILE}
-	log "->Setting up TimelineServer"
-	/usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start timelineserver >> ${LOG_FILE}
-        log "->Setting up ProxyServer"
-        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start proxyserver >> ${LOG_FILE}
-        log "->Setting up HistoryServer"
-        /usr/local/hadoop-${hadoop_version}/bin/mapred --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start historyserver >> ${LOG_FILE}
+        case $hadoop_major_version in
+                3)
+	        log "->Setting up ResourceManager"
+	        /usr/local/hadoop-${hadoop_version}/bin/yarn resourcemanager -format-state-store >> ${LOG_FILE} 2>&1
+        	sleep 5
+	        log "-> Starting ResourceManager"
+	        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start resourcemanager >> ${LOG_FILE}
+	        log "->Setting up TimelineServer"
+	        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start timelineserver >> ${LOG_FILE}
+	        log "->Setting up ProxyServer"
+	        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start proxyserver >> ${LOG_FILE}
+	        log "->Setting up HistoryServer"
+	        /usr/local/hadoop-${hadoop_version}/bin/mapred --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start historyserver >> ${LOG_FILE}
+                ;;
+
+                2)
+                log "-> Starting ResourceManager"
+                /usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start resourcemanager >> ${LOG_FILE}
+                log "->Setting up ProxyServer"
+		/usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start proxyserver >> ${LOG_FILE}
+                log "->Setting up HistoryServer"
+		/usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start historyserver >> ${LOG_FILE}
+                log "->Setting up MapReduce HistoryServer"
+		/usr/local/hadoop-${hadoop_version}/sbin/mr-jobhistory-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start historyserver >> ${LOG_FILE}
+
+                ;;
+        esac
         ;;
         ${master3fqdn})
         log "->Setting up Zookeeper"
@@ -650,10 +675,21 @@ case ${hostfqdn} in
         #Assume worker role
         log "->Assuming Worker role - Waiting for Master services"
         waitforMaster >> ${LOG_FILE}
-        log "->Setting up DataNode"
-        /usr/local/hadoop-${hadoop_version}/bin/hdfs --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start datanode >> ${LOG_FILE}
-        log "->Setting up NodeManager"
-        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start nodemanager >> ${LOG_FILE}
+        case $hadoop_major_version in
+                3)
+	        log "->Setting up DataNode"
+	        /usr/local/hadoop-${hadoop_version}/bin/hdfs --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start datanode >> ${LOG_FILE}
+                log "->Setting up NodeManager"
+	        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start nodemanager >> ${LOG_FILE}
+		;;
+
+                2)
+                log "->Setting up DataNode"
+                /usr/local/hadoop-${hadoop_version}/sbin/hadoop-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --script hdfs start datanode >> ${LOG_FILE}
+                log "->Setting up NodeManager"
+		/usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start nodemanager >> ${LOG_FILE}
+                ;;
+        esac
         ;;
 esac
 

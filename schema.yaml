@@ -313,7 +313,7 @@ variables:
   hadoop_par:
     type: string
     title: "Hadoop custom deployment"
-    description: "Paste a valid target to .tar.gz for Haodop deployment.  The .tar.gz should contain a top level directory 'hadoop-<version>'.  Using a pre-authenticated request (PAR) from OCI Object Storage is a great way to do this."
+    description: "Paste a valid wget target to .tar.gz for Haodop deployment.  The .tar.gz should contain a top level directory 'hadoop-(version)'.  Using a pre-authenticated request (PAR) from OCI Object Storage is a great way to do this.  You can also point to archive packages from https://archive.apache.org/dist/hadoop/common/"
     visible: 
       and:
         - "true"

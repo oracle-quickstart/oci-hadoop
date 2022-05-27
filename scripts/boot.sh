@@ -611,9 +611,21 @@ log "->Start Hadoop Services"
 #Assume worker role
 log "-->Assuming Worker role - Waiting for Master services"
 waitforMaster >> ${LOG_FILE}
-log "-->Setting up DataNode"
-/usr/local/hadoop-${hadoop_version}/bin/hdfs --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start datanode >> ${LOG_FILE}
-log "-->Setting up NodeManager"
-/usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start nodemanager >> ${LOG_FILE}
+hadoop_major_version=`echo $hadoop_version | cut -d '.' -f 1`
+case $hadoop_major_version in 
+	3)
+	log "-->Setting up DataNode"
+	/usr/local/hadoop-${hadoop_version}/bin/hdfs --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start datanode >> ${LOG_FILE}
+	log "-->Setting up NodeManager"
+	/usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start nodemanager >> ${LOG_FILE}
+	;;
+
+	2)
+        log "->Setting up DataNode"
+        /usr/local/hadoop-${hadoop_version}/sbin/hadoop-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --script hdfs start datanode >> ${LOG_FILE}
+        log "->Setting up NodeManager"
+        /usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start nodemanager >> ${LOG_FILE}
+	;;
+esac
 EXECNAME="END"
 log "->DONE"
