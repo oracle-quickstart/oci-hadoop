@@ -116,7 +116,9 @@ variable "hadoop_version" {
     default = "3.3.3" 
 }
 
-variable "hadoop_par" {}
+variable "hadoop_par" {
+    default = "https://archive.apache.org/dist/hadoop/common/hadoop-3.3.3/hadoop-3.3.3.tar.gz"
+}
 
 variable "zk_version" {
   default = "3.8.0"
@@ -130,7 +132,9 @@ variable "hive_version" {
   default = "3.1.3"
 }
 
-variable "hive_par" {}
+variable "hive_par" {
+    default = "https://archive.apache.org/dist/hive/hive-3.1.3/apache-hive-3.1.3-bin.tar.gz"
+}
 
 variable "worker_instance_shape" {
   default = "VM.Standard2.8"
