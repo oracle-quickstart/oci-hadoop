@@ -330,16 +330,16 @@ if [ ${install_hive} = "true" ]; then
         if [ ${hive_version} = "custom" ]; then
                 wget --no-check-certificate ${hive_par} -O hive-custom.tar.gz
                 tar -zxf hive-custom.tar.gz -C /usr/local/
-                hive_version=`ls /usr/local/ | grep hive | cut -d '-' -f 2`
+                hive_version=`ls /usr/local/ | grep hive | cut -d '-' -f 3`
         else
                 wget --no-check-certificate https://dlcdn.apache.org/hive/hive-${hive_version}/apache-hive-${hive_version}-bin.tar.gz
                 tar -xf apache-hive-${hive_version}-bin.tar.gz -C /usr/local/
         fi
-        chown -R opc:opc /usr/local/hive-${hive_version}
-        chmod -R 755 /usr/local/hive-${hive_version}
-	log "-->Cleanup"
-	rm -f apache-hive-${hive_version}-bin.tar.gz
-	rm -f hive-custom.tar.gz
+        chown -R opc:opc /usr/local/apache-hive-${hive_version}-bin
+        chmod -R 755 /usr/local/apache-hive-${hive_version}-bin
+        log "-->Cleanup"
+        rm -f apache-hive-${hive_version}-bin.tar.gz
+        rm -f hive-custom.tar.gz
 fi
 
 #Setup user-env
