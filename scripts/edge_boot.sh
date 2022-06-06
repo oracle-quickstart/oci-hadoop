@@ -290,4 +290,134 @@ log "->DONE"
 EXECNAME="BASHRC HADOOP PATH"
 echo "export PATH=\${PATH}:/usr/local/hadoop-${hadoop_version}/bin" >> ~/.bashrc
 log "->DONE"
+EXECNAME="CLUSTER MANAGEMENT SCRIPT"
+cat > /home/opc/manage-cluster.sh << EOF
+#!/bin/bash
+
+if [ ! -f ~/.ssh/id_rsa ]; then 
+	echo "Private key missing in ~/.ssh/id_rsa!  Please ensure this exists and is valid for cluster hosts."
+	exit
+fi
+
+usage () {
+echo "Usage is (start/stop) (all/hdfs/yarn)"
+exit
+}
+
+manage_service (){
+	ssh -i ~/.ssh/id_rsa -oStrictHostKeyChecking=no opc@\${cluster_host} "sudo systemctl \$1 \$2"
+}
+
+worker_count=`curl -s -L http://169.254.169.254/opc/v1/instance/metadata/worker_count`
+# Update cluster_domain if this is modified in stack"
+cluster_domain="private.hadoopvcn.oraclevcn.com"
+
+case \$1 in
+	start)
+		case \$2 in
+			all)
+                        echo "HDFS (NameNode) \$1 on Master 1"
+                        cluster_host="master-1.\${cluster_domain}"
+                        manage_service \$1 namenode
+                        echo "YARN \$1 on Master 2"
+                        cluster_host="master-2.\${cluster_domain}"
+                        manage_service \$1 historyserver
+                        manage_service \$1 proxyserver
+                        manage_service \$1 timelineserver
+                        manage_service \$1 resourcemanager
+                        for w in `seq 1 \${worker_count}`; do 
+                                cluster_host="worker-\${w}.\${cluster_domain}"
+                                echo "HDFS \$1 on Worker \$w"
+                                manage_service \$1 hdfs 
+                                echo "NodeManager \$1 on Worker \$w"
+                                manage_service \$1 nodemanager
+                        done
+			;;
+
+			hdfs)
+                        echo "HDFS (NameNode) \$1 on Master 1"
+                        cluster_host="master-1.\${cluster_domain}"
+                        manage_service \$1 namenode
+                        for w in `seq 1 \${worker_count}`; do
+                                cluster_host="worker-\${w}.\${cluster_domain}"
+                                echo "HDFS \$1 on Worker \$w"
+                                manage_service \$1 hdfs
+                        done
+			;;
+	
+			yarn)
+                        echo "YARN \$1 on Master 2"
+                        cluster_host="master-2.\${cluster_domain}"
+                        manage_service \$1 historyserver
+                        manage_service \$1 proxyserver
+                        manage_service \$1 timelineserver
+                        manage_service \$1 resourcemanager
+                        for w in `seq 1 \${worker_count}`; do
+                                cluster_host="worker-\${w}.\${cluster_domain}"
+                                echo "NodeManager \$1 on Worker \$w"
+                                manage_service \$1 nodemanager
+                        done
+			;;
+
+			*) usage
+			;;
+		esac	
+	;;
+
+	stop)
+		case \$2 in 
+			all)
+			for w in `seq 1 \${worker_count}`; do 
+				cluster_host="worker-\${w}.\${cluster_domain}"
+				echo "HDFS \$1 on Worker \$w"
+				manage_service \$1 hdfs
+				echo "NodeManager \$1 on Worker \$w"
+				manage_service \$1 nodemanager
+			done
+			echo "YARN \$1 on Master 2"
+			cluster_host="master-2.\${cluster_domain}"
+			manage_service \$1 historyserver
+			manage_service \$1 proxyserver
+			manage_service \$1 timelineserver
+			manage_service \$1 resourcemanager
+			echo "HDFS (NameNode) \$1 on Master 1"
+			cluster_host="master-1.\${cluster_domain}"
+			manage_service \$1 namenode
+			;;
+
+			hdfs)
+                        for w in `seq 1 \${worker_count}`; do 
+                                cluster_host="worker-\${w}.\${cluster_domain}"
+                                echo "HDFS \$1 on Worker \$w"
+                                manage_service \$1 hdfs 
+                        done
+                        echo "HDFS (NameNode) \$1 on Master 1"
+                        cluster_host="master-1.\${cluster_domain}"
+                        manage_service \$1 namenode
+			;;
+
+			yarn)
+                        for w in `seq 1 \${worker_count}`; do 
+                                cluster_host="worker-\${w}.\${cluster_domain}"
+                                echo "NodeManager \$1 on Worker \$w"
+                                manage_service \$1 nodemanager
+                        done   
+                        cluster_host="master-2.\${cluster_domain}"
+                        manage_service \$1 historyserver
+                        manage_service \$1 proxyserver
+                        manage_service \$1 timelineserver
+                        manage_service \$1 resourcemanager
+			;;
+
+			*) usage
+			;;
+
+		esac
+		;;
+
+	*) usage
+	;;
+esac
+EOF
+log "->DONE (/home/opc/manage-cluster.sh)
 

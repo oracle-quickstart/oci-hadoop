@@ -47,7 +47,7 @@ master1fqdn="master-1.${cluster_domain}"
 master2fqdn="master-2.${cluster_domain}"
 master3fqdn="master-3.${cluster_domain}"
 #
-hostfqdn=`hostname -f`
+hostfqdn=`curl -s -L http://169.254.169.254/opc/v1/instance/metadata/agent_hostname`
 if [ $enable_secondary_vnic = "true" ]; then
         EXECNAME="SECONDARY VNIC"
 	host_shape=` curl -L http://169.254.169.254/opc/v1/instance/shape`
@@ -618,7 +618,54 @@ done;
 
 echo "</configuration>" >> /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
 
-log "->Start Hadoop Services"
+log "->Start Hadoop Service Configuration"
+
+yarn3_setup (){
+	log "->Setting up $1 in SystemD"
+cat > /lib/systemd/system/$1.service << EOF
+[Unit]
+Description=Hadoop YARN $1 service
+After=zk.service
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStart=  /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start $1
+ExecStop=  /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon stop $1
+Restart=on-failure
+RestartSec=10s
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
+	log "-> Starting $1"
+	systemctl start $1 >> ${LOG_FILE}
+	systemctl enable $1 >> ${LOG_FILE}
+}
+
+yarn2_setup (){
+        log "->Setting up $1 in SystemD"
+cat > /lib/systemd/system/$1.service << EOF
+[Unit]
+Description=Hadoop YARN $1 service
+After=zk.service
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStart= /usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start $1
+ExecStop= /usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ stop $1
+Restart=on-failure
+RestartSec=10s
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
+	log "->Starting $1"
+	systemctl start $1
+	systemctl enable $1
+}
+
 zk_setup (){
         #Zookeeper
 	wget https://downloads.apache.org/zookeeper/zookeeper-${zk_version}/apache-zookeeper-${zk_version}-bin.tar.gz
@@ -637,17 +684,63 @@ server.1=${master1fqdn}:2888:3888
 server.2=${master2fqdn}:2888:3888
 server.3=${master3fqdn}:2888:3888
 " >> /usr/local/apache-zookeeper-${zk_version}-bin/conf/zoo.cfg
-/usr/local/apache-zookeeper-${zk_version}-bin/bin/zkServer.sh start
+log "->Setting up Apache Zookeeper (zk.service) in SystemD"
+cat > /lib/systemd/system/zk.service << EOF
+[Unit]
+Description=Apache Zookeeper service
+After=network.target
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStart= /usr/local/apache-zookeeper-${zk_version}-bin/bin/zkServer.sh start
+ExecStop= /usr/local/apache-zookeeper-${zk_version}-bin/bin/zkServer.sh stop
+Restart=on-failure
+RestartSec=10s
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
+        log "->Starting Zookeeper service"
+        systemctl start zk.service
+        systemctl enable zk.service
 }
+
+zkfc_setup (){
+	log "->Setting up Hadoop Zookeeper (zkfc.service) in SystemD"
+cat > /lib/systemd/system/zkfc.service << EOF
+[Unit]
+Description=Hadoop Zookeeper service
+After=zk.service
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStart= /usr/local/hadoop-${hadoop_version}/bin/hdfs --daemon start zkfc
+ExecStop= /usr/local/hadoop-${hadoop_version}/bin/hdfs --daemon stop zkfc
+Restart=on-failure
+RestartSec=10s
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
+        log "->Starting Hadoop Zookeeper service"
+        systemctl start zkfc.service
+        systemctl enable zkfc.service
+}
+
 source ~/.bashrc
 hadoop_major_version=`echo $hadoop_version | cut -d '.' -f 1`
+#
+# Main Host setup detection
+#
 case ${hostfqdn} in
         ${master1fqdn})
-        log "->Setting up Zookeeper"
+        log "->Setting up Hadoop Zookeeper"
         myid=1
         zk_setup >> ${LOG_FILE}
         /usr/local/hadoop-${hadoop_version}/bin/hdfs zkfc -formatZK >> ${LOG_FILE}
-        /usr/local/hadoop-${hadoop_version}/bin/hdfs --daemon start zkfc >> ${LOG_FILE}
+	zkfc_setup >> ${LOG_FILE}
         log "->Setting up NameNode"
 	log "->Formattting NameNode for ${cluster_name}"
         /usr/local/hadoop-${hadoop_version}/bin/hdfs namenode -format ${cluster_name} >> ${LOG_FILE} 2>&1
@@ -655,74 +748,131 @@ case ${hostfqdn} in
 	log "->Starting NameNode"
 	case $hadoop_major_version in 
 		3)
-	        /usr/local/hadoop-${hadoop_version}/bin/hdfs --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start namenode >> ${LOG_FILE}
+		log "->Setting up NameNode in SystemD"
+cat > /lib/systemd/system/namenode.service << EOF
+[Unit]
+Description=Hadoop NameNode service
+After=zkfc.service
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStart= /usr/local/hadoop-${hadoop_version}/bin/hdfs --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start namenode
+ExecStop= /usr/local/hadoop-${hadoop_version}/bin/hdfs --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon stop namenode
+Restart=on-failure
+RestartSec=10s
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
 		;;
 
 		2)
-		/usr/local/hadoop-${hadoop_version}/sbin/hadoop-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --script hdfs start namenode
+	        log "->Setting up NameNode in SystemD"
+cat > /lib/systemd/system/namenode.service << EOF
+[Unit]
+Description=Hadoop NameNode service
+After=network.target
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStart= /usr/local/hadoop-${hadoop_version}/sbin/hadoop-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --script hdfs start namenode
+ExecStop= /usr/local/hadoop-${hadoop_version}/sbin/kill-namenode.sh
+Restart=on-failure
+RestartSec=10s
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
+cat > /usrlocal/hadoop-${hadoop_version}/sbin/kill-namenode.sh << EOF
+		echo "
+#!/bin/bash
+/bin/ps -ef | /bin/grep java | /bin/grep NameNode | /bin/awk '{print \$2}' | /bin/xargs kill -9
+EOF
+		chmod +x /usrlocal/hadoop-${hadoop_version}/sbin/kill-namenode.sh
 		;;
 	esac
+	log "->Starting NameNode Service"
+        systemctl start namenode.service >> ${LOG_FILE}
+        systemctl enable namenode.service >> ${LOG_FILE}
         ;;
+
         ${master2fqdn})
         log "->Setting up Zookeeper"
         myid=2
         zk_setup >> ${LOG_FILE}
-        /usr/local/hadoop-${hadoop_version}/bin/hdfs --daemon start zkfc >> ${LOG_FILE}
+	zkfc_setup >> ${LOG_FILE}
 	waitforMaster >> ${LOG_FILE}
         case $hadoop_major_version in
                 3)
 	        log "->Setting up ResourceManager"
 	        /usr/local/hadoop-${hadoop_version}/bin/yarn resourcemanager -format-state-store >> ${LOG_FILE} 2>&1
         	sleep 5
-	        log "-> Starting ResourceManager"
-	        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start resourcemanager >> ${LOG_FILE}
-	        log "->Setting up TimelineServer"
-	        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start timelineserver >> ${LOG_FILE}
-	        log "->Setting up ProxyServer"
-	        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start proxyserver >> ${LOG_FILE}
-	        log "->Setting up HistoryServer"
-	        /usr/local/hadoop-${hadoop_version}/bin/mapred --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start historyserver >> ${LOG_FILE}
+		yarn3_setup resourcemanager
+		yarn3_setup timelineserver
+		yarn3_setup proxyserver
+	        log "->Setting up HistoryServer in SystemD"
+cat > /lib/systemd/system/historyserver.service << EOF
+[Unit]
+Description=Hadoop YARN historyserver service
+After=network.target
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStart= /usr/local/hadoop-${hadoop_version}/bin/mapred --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start historyserver
+ExecStop= /usr/local/hadoop-${hadoop_version}/bin/mapred --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon stop historyserver
+Restart=on-failure
+RestartSec=10s
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
+		log "->Starting HistoryServer"
+		systemctl start historyserver.service >> ${LOG_FILE}
+		systemctl enable historyserver.service >> ${LOG_FILE}
                 ;;
 
                 2)
-                log "-> Starting ResourceManager"
-                /usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start resourcemanager >> ${LOG_FILE}
-                log "->Setting up ProxyServer"
-		/usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start proxyserver >> ${LOG_FILE}
-                log "->Setting up HistoryServer"
-		/usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start historyserver >> ${LOG_FILE}
-                log "->Setting up MapReduce HistoryServer"
-		/usr/local/hadoop-${hadoop_version}/sbin/mr-jobhistory-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start historyserver >> ${LOG_FILE}
-
+		yarn2_setup resourcemanager
+		yarn2_setup timelineserver
+		yarn2_setup proxyserver
+                log "->Setting up MapReduce HistoryServer in SystemD"
+cat > /lib/systemd/system/historyserver.service << EOF 
+[Unit]
+Description=Hadoop YARN historyserver service
+After=network.target
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStart= /usr/local/hadoop-${hadoop_version}/sbin/mr-jobhistory-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start historyserver
+ExecStop= /usr/local/hadoop-${hadoop_version}/sbin/mr-jobhistory-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ stop historyserver
+Restart=on-failure
+RestartSec=10s
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
+		log "->Starting MapReduce HistoryServer"
+		systemctl start historyserver.service >> ${LOG_FILE}
+		systemctl enable historyserver.service >> ${LOG_FILE}
                 ;;
         esac
         ;;
-        ${master3fqdn})
+        
+	${master3fqdn})
         log "->Setting up Zookeeper"
         myid=3
         zk_setup >> ${LOG_FILE}
-        /usr/local/hadoop-${hadoop_version}/bin/hdfs --daemon start zkfc >> ${LOG_FILE}
+	zkfc_setup >> ${LOG_FILE}
         ;;
-        *)
-        #Assume worker role
-        log "->Assuming Worker role - Waiting for Master services"
-        waitforMaster >> ${LOG_FILE}
-        case $hadoop_major_version in
-                3)
-	        log "->Setting up DataNode"
-	        /usr/local/hadoop-${hadoop_version}/bin/hdfs --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start datanode >> ${LOG_FILE}
-                log "->Setting up NodeManager"
-	        /usr/local/hadoop-${hadoop_version}/bin/yarn --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --daemon start nodemanager >> ${LOG_FILE}
-		;;
 
-                2)
-                log "->Setting up DataNode"
-                /usr/local/hadoop-${hadoop_version}/sbin/hadoop-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --script hdfs start datanode >> ${LOG_FILE}
-                log "->Setting up NodeManager"
-		/usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start nodemanager >> ${LOG_FILE}
-                ;;
-        esac
-        ;;
+        *)
+	log "->ERROR agent_hostname $hostfqdn failed to match master role! This node will not have any cluster roles set." 
+	;;
+
 esac
 
 EXECNAME="END"

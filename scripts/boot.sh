@@ -42,7 +42,7 @@ master1fqdn="master-1.${cluster_domain}"
 master2fqdn="master-2.${cluster_domain}"
 master3fqdn="master-3.${cluster_domain}"
 #
-hostfqdn=`hostname -f`
+hostfqdn=`curl -s -L http://169.254.169.254/opc/v1/instance/metadata/agent_hostname`
 if [ $enable_secondary_vnic = "true" ]; then
         EXECNAME="SECONDARY VNIC"
 	host_shape=` curl -L http://169.254.169.254/opc/v1/instance/shape`
@@ -653,10 +653,56 @@ case $hadoop_major_version in
 	;;
 
 	2)
-        log "->Setting up DataNode"
-        /usr/local/hadoop-${hadoop_version}/sbin/hadoop-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --script hdfs start datanode >> ${LOG_FILE}
-        log "->Setting up NodeManager"
-        /usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start nodemanager >> ${LOG_FILE}
+        log "->Setting up HDFS in SystemD"
+cat > /lib/systemd/system/hdfs.service << EOF
+[Unit]
+Description=Hadoop HDFS service
+After=network.target
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStart= /usr/local/hadoop-${hadoop_version}/sbin/hadoop-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ --script hdfs start datanode
+ExecStop= /usr/local/hadoop-${hadoop_version}/sbin/kill-hdfs.sh
+Restart=on-failure
+RestartSec=10s
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
+cat > /usrlocal/hadoop-${hadoop_version}/sbin/kill-hdfs.sh << EOF
+#!/bin/bash
+/bin/ps -ef | /bin/grep java | /bin/grep DataNode | /bin/awk '{print \$2}' | /bin/xargs kill -9
+EOF
+chmod +x /usrlocal/hadoop-${hadoop_version}/sbin/kill-hdfs.sh
+        log "->Setting up NodeManager in SystemD"
+cat > /lib/systemd/system/nodemanager.service << EOF
+[Unit]
+Description=Hadoop NodeManager service
+After=hdfs.service
+[Service]
+User=root
+Group=root
+Type=forking
+ExecStart= /usr/local/hadoop-${hadoop_version}/sbin/yarn-daemon.sh --config /usr/local/hadoop-${hadoop_version}/etc/hadoop/ start nodemanager
+ExecStop= /usr/local/hadoop-${hadoop_version}/sbin/kill-nodemanager.sh
+Restart=on-failure
+RestartSec=10s
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
+cat > /usrlocal/hadoop-${hadoop_version}/sbin/kill-nodemanager.sh << EOF
+#!/bin/bash
+/bin/ps -ef | /bin/grep java | /bin/grep NodeManager | /bin/awk '{print \$2}' | /bin/xargs kill -9
+EOF
+chmod +x /usr/local/hadoop-${hadoop_version}/sbin/kill-nodemanager.sh
+        log "->Starting HDFS service"
+        systemctl start hdfs.service >> ${LOG_FILE}
+	systemctl enable hdfs.service >> ${LOG_FILE}
+	log "->Starting NodeManager service"
+	systemctl start nodemanager.service >> ${LOG_FILE}
+	systemctl enable nodemanager.service >> ${LOG_FILE}
 	;;
 esac
 EXECNAME="END"
