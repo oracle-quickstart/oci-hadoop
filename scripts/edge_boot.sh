@@ -291,6 +291,7 @@ EXECNAME="BASHRC HADOOP PATH"
 echo "export PATH=\${PATH}:/usr/local/hadoop-${hadoop_version}/bin" >> ~/.bashrc
 log "->DONE"
 EXECNAME="CLUSTER MANAGEMENT SCRIPT"
+log "->Building script"
 cat > /home/opc/manage-cluster.sh << EOF
 #!/bin/bash
 
@@ -308,7 +309,7 @@ manage_service (){
 	ssh -i ~/.ssh/id_rsa -oStrictHostKeyChecking=no opc@\${cluster_host} "sudo systemctl \$1 \$2"
 }
 
-worker_count=`curl -s -L http://169.254.169.254/opc/v1/instance/metadata/worker_count`
+worker_count=\`curl -s -L http://169.254.169.254/opc/v1/instance/metadata/worker_count\`
 # Update cluster_domain if this is modified in stack"
 cluster_domain="private.hadoopvcn.oraclevcn.com"
 
@@ -325,7 +326,7 @@ case \$1 in
                         manage_service \$1 proxyserver
                         manage_service \$1 timelineserver
                         manage_service \$1 resourcemanager
-                        for w in `seq 1 \${worker_count}`; do 
+                        for w in \`seq 1 \${worker_count}\`; do 
                                 cluster_host="worker-\${w}.\${cluster_domain}"
                                 echo "HDFS \$1 on Worker \$w"
                                 manage_service \$1 hdfs 
@@ -338,7 +339,7 @@ case \$1 in
                         echo "HDFS (NameNode) \$1 on Master 1"
                         cluster_host="master-1.\${cluster_domain}"
                         manage_service \$1 namenode
-                        for w in `seq 1 \${worker_count}`; do
+                        for w in \`seq 1 \${worker_count}\`; do
                                 cluster_host="worker-\${w}.\${cluster_domain}"
                                 echo "HDFS \$1 on Worker \$w"
                                 manage_service \$1 hdfs
@@ -352,7 +353,7 @@ case \$1 in
                         manage_service \$1 proxyserver
                         manage_service \$1 timelineserver
                         manage_service \$1 resourcemanager
-                        for w in `seq 1 \${worker_count}`; do
+                        for w in \`seq 1 \${worker_count}\`; do
                                 cluster_host="worker-\${w}.\${cluster_domain}"
                                 echo "NodeManager \$1 on Worker \$w"
                                 manage_service \$1 nodemanager
@@ -367,7 +368,7 @@ case \$1 in
 	stop)
 		case \$2 in 
 			all)
-			for w in `seq 1 \${worker_count}`; do 
+			for w in \`seq 1 \${worker_count}\`; do 
 				cluster_host="worker-\${w}.\${cluster_domain}"
 				echo "HDFS \$1 on Worker \$w"
 				manage_service \$1 hdfs
@@ -386,7 +387,7 @@ case \$1 in
 			;;
 
 			hdfs)
-                        for w in `seq 1 \${worker_count}`; do 
+                        for w in \`seq 1 \${worker_count}\`; do 
                                 cluster_host="worker-\${w}.\${cluster_domain}"
                                 echo "HDFS \$1 on Worker \$w"
                                 manage_service \$1 hdfs 
@@ -397,7 +398,7 @@ case \$1 in
 			;;
 
 			yarn)
-                        for w in `seq 1 \${worker_count}`; do 
+                        for w in \`seq 1 \${worker_count}\`; do 
                                 cluster_host="worker-\${w}.\${cluster_domain}"
                                 echo "NodeManager \$1 on Worker \$w"
                                 manage_service \$1 nodemanager
@@ -419,5 +420,8 @@ case \$1 in
 	;;
 esac
 EOF
+log "->Changing Permissions"
+chown opc:opc /home/opc/manager-cluster.sh
+chmod +x /home/opc/manage-cluster.sh
 log "->DONE (/home/opc/manage-cluster.sh)
 
