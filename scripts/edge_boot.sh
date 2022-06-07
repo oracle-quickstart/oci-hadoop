@@ -423,5 +423,5 @@ EOF
 log "->Changing Permissions"
 chown opc:opc /home/opc/manager-cluster.sh
 chmod +x /home/opc/manage-cluster.sh
-log "->DONE (/home/opc/manage-cluster.sh)
+log "->DONE - /home/opc/manage-cluster.sh"
 
