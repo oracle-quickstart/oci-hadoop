@@ -676,7 +676,7 @@ echo "   <property>
    <property>
       <name>yarn.resourcemanager.store.class</name>
       <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.FileSystemRMStateStore</value>
-   <property>" >> /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
+   </property>" >> /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
 
 echo "</configuration>" >> /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
 log "->Start Hadoop Services"

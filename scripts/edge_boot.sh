@@ -318,7 +318,7 @@ echo "<configuration>
    <property>
       <name>yarn.resourcemanager.store.class</name>
       <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.FileSystemRMStateStore</value>
-   <property>" > /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
+   </property>" > /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
 for w in `seq 1 ${worker_count}`; do
 echo "   <property>
       <name>yarn.nodemanager.address</name>
