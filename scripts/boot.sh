@@ -469,7 +469,19 @@ echo "<configuration>
    <property>
       <name>ha.zookeeper.quorum</name>
       <value>${master1fqdn}:2181,${master2fqdn}:2181,${master3fqdn}:2181</value>
-    </property>" >/usr/local/hadoop-${hadoop_version}/etc/hadoop/core-site.xml
+    </property>
+   <property>
+      <name>fs.oci.client.jersey.logging.enabled</name>
+      <value>true</value>
+   </property>
+   <property>
+      <name>fs.oci.client.jersey.logging.level</name>
+      <value>WARNING</value>
+   </property>
+   <property>
+      <name>fs.oci.client.jersey.logging.verbosity</name>
+      <value>HEADERS_ONLY</value>
+   </property>" >/usr/local/hadoop-${hadoop_version}/etc/hadoop/core-site.xml
 unset d
 for d in `seq 1 ${hdfs_disks}`; do
         if [ -z $dirlist ]; then
@@ -541,7 +553,7 @@ echo "
    </property>
    <property>
       <name>mapreduce.jobhistory.address</name>
-      <value>${master1fqdn}:10020</value>
+      <value>${master2fqdn}:10020</value>
    </property>
     <property>
       <name>yarn.app.mapreduce.am.job.client.port-range</name>
@@ -636,7 +648,35 @@ echo "<configuration>
 echo "   <property>
       <name>yarn.nodemanager.address</name>
       <value>${hostfqdn}:7999</value>
-   </property>" >> /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
+   </property>
+   <property>
+      <name>yarn.log-aggregation-enable</name>
+      <value>true</value>
+   </property>
+   <property>
+      <name>yarn.log-aggregation.retain-seconds</name>
+      <value>10800</value>
+   </property>
+   <property>
+      <name>yarn.log-aggregation.retain-check-interval-seconds</name>
+      <value>0</value>
+   </property>
+   <property>
+      <name>yarn.nodemanager.remote-app-log-dir</name>
+      <value>/tmp/logs</value>
+   </property>
+   <property>      
+      <name>yarn.nodemanager.remote-app-log-dir-suffix</name>
+      <value>logs</value>
+   </property>
+   <property>
+      <name>yarn.resourcemanager.recovery.enabled</name>
+      <value>true</value>
+   </property>
+   <property>
+      <name>yarn.resourcemanager.store.class</name>
+      <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.FileSystemRMStateStore</value>
+   <property>" >> /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
 
 echo "</configuration>" >> /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
 log "->Start Hadoop Services"

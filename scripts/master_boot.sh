@@ -474,6 +474,18 @@ echo "<configuration>
       <name>hadoop.tmp.dir</name>
       <value>/data0</value>
    </property>
+   <property>
+      <name>fs.oci.client.jersey.logging.enabled</name>
+      <value>true</value>
+   </property>
+   <property>
+      <name>fs.oci.client.jersey.logging.level</name>
+      <value>WARNING</value>
+   </property>
+   <property>
+      <name>fs.oci.client.jersey.logging.verbosity</name>
+      <value>HEADERS_ONLY</value>
+   </property>
 </configuration>" >/usr/local/hadoop-${hadoop_version}/etc/hadoop/core-site.xml
 log "->Building Hadoop Configuration - hdfs-site.xml"
 #Configure hdfs-site.xml
@@ -531,7 +543,7 @@ echo "
    </property>
    <property>
       <name>mapreduce.jobhistory.address</name>
-      <value>${master1fqdn}:10020</value>
+      <value>${master2fqdn}:10020</value>
    </property>
     <property>
       <name>yarn.app.mapreduce.am.job.client.port-range</name>
@@ -608,7 +620,35 @@ echo "<configuration>
    <property>
       <name>yarn.application.classpath</name>
       <value>/usr/local/hadoop-${hadoop_version}/etc/hadoop:/usr/local/hadoop-${hadoop_version}/share/hadoop/common/lib/*:/usr/local/hadoop-${hadoop_version}/share/hadoop/common/*:/usr/local/hadoop-${hadoop_version}/share/hadoop/hdfs:/usr/local/hadoop-${hadoop_version}/share/hadoop/hdfs/lib/*:/usr/local/hadoop-${hadoop_version}/share/hadoop/hdfs/*:/usr/local/hadoop-${hadoop_version}/share/hadoop/mapreduce/*:/usr/local/hadoop-${hadoop_version}/share/hadoop/yarn:/usr/local/hadoop-${hadoop_version}/share/hadoop/yarn/lib/*:/usr/local/hadoop-${hadoop_version}/share/hadoop/yarn/*</value>
-   </property>" > /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
+   </property>
+   <property>
+      <name>yarn.log-aggregation-enable</name>
+      <value>true</value>
+   </property>
+   <property>
+      <name>yarn.log-aggregation.retain-seconds</name>
+      <value>10800</value>
+   </property>
+   <property>
+      <name>yarn.log-aggregation.retain-check-interval-seconds</name>
+      <value>0</value>
+   </property>
+   <property>
+      <name>yarn.nodemanager.remote-app-log-dir</name>
+      <value>/tmp/logs</value>
+   </property>
+   <property>      
+      <name>yarn.nodemanager.remote-app-log-dir-suffix</name>
+      <value>logs</value>
+   </property>
+   <property>
+      <name>yarn.resourcemanager.recovery.enabled</name>
+      <value>true</value>
+   </property>
+   <property>
+      <name>yarn.resourcemanager.store.class</name>
+      <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.FileSystemRMStateStore</value>
+   <property>" > /usr/local/hadoop-${hadoop_version}/etc/hadoop/yarn-site.xml
 for w in `seq 1 ${worker_count}`; do 
 echo "   <property>
       <name>yarn.nodemanager.address</name>
